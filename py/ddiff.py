@@ -8,7 +8,6 @@ def ddiff(x:Iterable, y:Iterable,ne:int=-1):
 	for i in range(1,ne+1):
 		for j in range(ne-1,i,-1):
 			out[j]=(out[j]-out[j-1])/(x[j]-x[j-i])
-			print(f"{i=} {j=} d={out[j]}")
 	out[-1]=(out[-1]-out[-2])/(x[-1]-x[0])
 	return out
 

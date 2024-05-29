@@ -6,7 +6,7 @@ class Poly:
 	print_as_tuple:bool
 	print_as_you_go:bool
 	def __init__(self,c:list,pat:bool=False,pag:bool=False):
-		self.coeff=c[::-1]
+		self.coeff=c
 		self.print_as_tuple=pat
 		self.print_as_you_go=pag
 	def __mul__(self,rhs:'Poly|float'):
@@ -18,8 +18,8 @@ class Poly:
 			for (j,b) in enumerate(rhs.coeff):
 				result[i+j]+=(a*b)
 		if self.print_as_you_go:
-			print(result[::-1])
-		return Poly(result[::-1],self.print_as_tuple,self.print_as_you_go)
+			print(result)
+		return Poly(result,self.print_as_tuple,self.print_as_you_go)
 	def __add__(self,rhs:'Poly'):
 		better=max(self.coeff,rhs.coeff,key=len)
 		left=(better==self.coeff)
@@ -33,52 +33,62 @@ class Poly:
 		for i,v in enumerate(to_add):
 			result[i]+=v
 		if self.print_as_you_go:
-			print(result[::-1])
-		return Poly(result[::-1],self.print_as_tuple,self.print_as_you_go)
+			print(result)
+		return Poly(result,self.print_as_tuple,self.print_as_you_go)
+	def __radd__(self,rhs:'Poly'):
+		better=max(self.coeff,rhs.coeff,key=len)
+		left=(better==self.coeff)
+		num_terms=len(better)
+		if left:
+			result=deepcopy(self.coeff)
+			to_add=rhs.coeff
+		else:
+			result=deepcopy(rhs.coeff)
+			to_add=self.coeff
+		for i,v in enumerate(to_add):
+			result[i]+=v
+		if self.print_as_you_go:
+			print(result)
+		return Poly(result,self.print_as_tuple,self.print_as_you_go)
 	def __repr__(self):
 		if self.print_as_tuple:
-			return str(self.coeff[::-1])
+			return str(self.coeff)
 		res=[]
 		for (i,v) in enumerate(self.coeff):
 			temp=""
-			if i==0:
-				temp=f"{v:+}"
-			elif abs(v)==1:
-				sign=(v/abs(v))
-				temp=f"{sign}x"
-			else:
-				temp=f"{v:+}x"
-				if i > 1:
-					temp+="^"+str(i)
+			pow=len(self.coeff)-i-1
+			temp=f"{v:+}"
+			if pow > 0:
+				temp+="x^"+str(pow)
 			res.append(temp)
 		# i=len(self.coeff)-1
 		# v=self.coeff[-1]
 		# res.append(f"{v}x^{i}")
-		return "".join(res[::-1])
+		return "".join(res)
 	def __call__(self,x:float) -> float:
-		res=0.0
-		for i,v in enumerate(self.coeff):
+		res=self.coeff[0]
+		for v in self.coeff[1:]:
 			# print(f"{v}x^{i}={v*(x**i)}")
-			res+=v*(x**i)
+			res=v+(x*res)
 		return res
+	def __pow__(self,p):
+		if p==1:
+			return self
+		return self*pow(self,p-1)
 	def __len__(self):
 		return len(self.coeff)-1
 
-p1=Poly([1,-1])
-print(p1)
-p2=Poly([1,-2])
-print(p2)
-p3=Poly([1,-3])
-print(p3)
-p4=Poly([1,-4])
-print(p4)
-p12=p1*p2
-p122=p12*p2
-p1223=p122*p3
-p12233=p1223*p3
-p122334=p12233*p4
-p0=Poly([2])
 if __name__=="__main__":
+	p1=Poly([1,-1])
+	p2=Poly([1,-2])
+	p3=Poly([1,-3])
+	p4=Poly([1,-4])
+	p12=p1*p2
+	p122=p12*p2
+	p1223=p122*p3
+	p12233=p1223*p3
+	p122334=p12233*p4
+	p0=Poly([2])
 	print(p1.coeff)
 	print(p1)
 	p0.print_as_you_go=False

@@ -1,8 +1,9 @@
 from typing import Sequence
 from numpy import linspace, ones,zeros,chararray,array,logspace
 from numpy.linalg import solve
-from math import log10,ceil,exp,atan
-from si_num import to_si
+from math import factorial, log10,ceil,tanh
+from si_num import to_si # pyright:ignore
+from ddiff import ddiff
 from matplotlib import pyplot as plt
 
 def print_pade(aa:Sequence[float],bb:Sequence[float]):
@@ -39,6 +40,9 @@ def print_pade(aa:Sequence[float],bb:Sequence[float]):
 	print(f"{' '*6}{num:^{str_len}s}")
 	print(center)
 	print(f"{' '*6}{denom:^{str_len}s}")
+
+def get_taylor_coeff(diffs:list):
+	return [d/factorial(i) for i,d in enumerate(diffs)]
 
 def eval_pade(aa,bb, x):
 	# num=straight_eval(aa,x)
@@ -103,7 +107,7 @@ def L(f):
 	b=2.8e-9
 	c=800e-9
 	f0=2e4
-	res=(0.6366*a)*atan(-c*(f-f0))+b;
+	res=a*tanh(-c*(f-f0))+b;
 	return res
 def solve_system(s:list[float],M:int,N:int) -> tuple[tuple[float,...],tuple[float,...]]:
 	"""
@@ -130,17 +134,15 @@ def solve_system(s:list[float],M:int,N:int) -> tuple[tuple[float,...],tuple[floa
 	b=(1,*map(float,b.flatten()),)
 	return a,b
 def get_err(aa,bb,plot=False):
-	xmax=10000
 	xs=logspace(1,8,10000)
 	sig=tuple(map(L,xs))
-	# sig=tuple(map(lambda x:1/(1+exp(x)),xs))
 	sig=array(sig)
 	approx=tuple(map(lambda x:eval_pade(aa,bb,x),xs))
 	approx=array(approx)
 	err=(sig-approx)/sig
 	if plot:
-		plt.semilogx(xs,sig)
-		plt.semilogx(xs,approx)
+		plt.loglog(xs,sig)
+		plt.loglog(xs,approx)
 		# plt.ylim(-2,2)
 		plt.show()
 	return sum(err)
@@ -171,11 +173,13 @@ def twopoint(N):
 	return a,b
 
 if __name__=="__main__":
-	maclaurin_coeffs=[2.158517e-09,-1.332268e-16,-2.467162e-19,1.827528e-21,-7.614698e-24,2.030586e-26,0.000000e+00,-2.558057e-31,]
-	aa=[5.4284e34,6.9769e40,7.0833e46,3.8223e52][::-1]
-	bb= [-4.8976e32, 2.708e43, 2.618e49, 2.731e55, 1.256e61][::-1]
-	sample_matrix(3,4)
-	aa,bb=solve_system(maclaurin_coeffs,3,4)
+	base=1e6
+	step=20
+	xs=linspace(base,base+step*9,step)
+	ys=tuple(map(L,xs))
+	coeffs=get_taylor_coeff(ddiff(xs,ys))
+	print(coeffs[::-1])
+	aa,bb=solve_system(coeffs,3,4)
 	print_pade(aa,bb)
 	# aa,bb=twopoint(5)
 	get_err(aa,bb,True)
