@@ -23,10 +23,15 @@ void rref(double ** mat, int m, int n) {
 */
 void double_sort(double **mat,int m, int n) {
 	int *pivots=malloc(sizeof(double)*n);
+
+	// I figured it would be easiest to do this one column at a time, so `temp` was supposed to be
+	// the column vector we're currently processing
 	int *temp=malloc(sizeof(double)*n);
 	for (int i=0;i < n;++i) {
 		temp[i]=i;
 	}
+	// sorting goes here? It will probably need to be O(n^3) - an outer loop for each column vector,
+	// and whatever sorting algo you want that will go inside there.
 	for (int i=0; i < n; ++i) {
 		for (int j=0; j < m; ++j) {
 			
