@@ -64,21 +64,21 @@ class Poly:
 	def __len__(self):
 		return len(self.coeff)-1
 
-p1=Poly([1,-1])
-print(p1)
-p2=Poly([1,-2])
-print(p2)
-p3=Poly([1,-3])
-print(p3)
-p4=Poly([1,-4])
-print(p4)
-p12=p1*p2
-p122=p12*p2
-p1223=p122*p3
-p12233=p1223*p3
-p122334=p12233*p4
-p0=Poly([2])
 if __name__=="__main__":
+	p1=Poly([1,-1])
+	print(p1)
+	p2=Poly([1,-2])
+	print(p2)
+	p3=Poly([1,-3])
+	print(p3)
+	p4=Poly([1,-4])
+	print(p4)
+	p12=p1*p2
+	p122=p12*p2
+	p1223=p122*p3
+	p12233=p1223*p3
+	p122334=p12233*p4
+	p0=Poly([2])
 	print(p1.coeff)
 	print(p1)
 	p0.print_as_you_go=False
