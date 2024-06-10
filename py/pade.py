@@ -1,15 +1,41 @@
 from typing import Sequence
-from numpy import linspace, ones,zeros,chararray,array,logspace
-from numpy.linalg import solve
-from math import factorial, log10,ceil,tanh
-from si_num import to_si # pyright:ignore
 from ddiff import ddiff
+from numpy import linspace, ones,zeros,chararray,array,logspace,ndarray
+from numpy.linalg import solve
+from math import log10,ceil,exp,atan
+from si_num import to_si
 from matplotlib import pyplot as plt
 
-def print_pade(aa:Sequence[float],bb:Sequence[float]):
-	num=""
+def pascal(row,invert=True) -> ndarray:
+	if row==1:
+		return ones(1)
+	res = zeros((row,row))
+	res[:,0]=1
+	for j in range(1,row):
+		for k in range(j,0,-1):
+			res[j,k]=res[j-1,k]+res[j-1,k-1]
+	if invert:
+		for i in range(row):
+			for j in range(row-1):
+				res[i,j] *= (-1)**(j)
+	return res
+	
+def recenter_poly(aa:Sequence[float],center:float):
+	cm = pascal(len(aa)) # Coefiencient Multipliers 
+	output=[0.]*len(aa)
+	for i in range(len(aa)):
+		for j in range(len(aa)-i):
+			M=cm[i+j][j]
+			an=aa[i+j]
+			output[i]+=cm[i+j][j]*aa[i+j]*(center**(j+1))
+	return output
 
+def print_pade(aa:Sequence[float],bb:Sequence[float], base:float=0):
+	num=""
 	# Create numerator string
+	if base != 0:
+		aa=recenter_poly(aa,base)
+		bb=recenter_poly(bb,base)
 	for i,_a in enumerate(aa):
 		a=to_si(_a,sign=True)
 		if i==0:
@@ -41,11 +67,7 @@ def print_pade(aa:Sequence[float],bb:Sequence[float]):
 	print(center)
 	print(f"{' '*6}{denom:^{str_len}s}")
 
-def get_taylor_coeff(diffs:list):
-	return [d/factorial(i) for i,d in enumerate(diffs)]
-
 def eval_pade(aa,bb, x):
-	# num=straight_eval(aa,x)
 	num=unroll(aa,x)
 	# denom=straight_eval(bb,x)
 	denom=unroll(bb,x)
@@ -61,7 +83,6 @@ def straight_eval(aa:list[float],x:float) -> float:
 	for i,v in enumerate(aa):
 		res+=(v*x**(i))
 	return res
-
 
 def sample_matrix(M,N):
 	"""
@@ -107,7 +128,7 @@ def L(f):
 	b=2.8e-9
 	c=800e-9
 	f0=2e4
-	res=a*tanh(-c*(f-f0))+b;
+	res=(0.6366*a)*atan(-c*(f-f0))+b;
 	return res
 def solve_system(s:list[float],M:int,N:int) -> tuple[tuple[float,...],tuple[float,...]]:
 	"""
@@ -134,16 +155,18 @@ def solve_system(s:list[float],M:int,N:int) -> tuple[tuple[float,...],tuple[floa
 	b=(1,*map(float,b.flatten()),)
 	return a,b
 def get_err(aa,bb,plot=False):
+	xmax=10000
 	xs=logspace(1,8,10000)
 	sig=tuple(map(L,xs))
+	# sig=tuple(map(lambda x:1/(1+exp(x)),xs))
 	sig=array(sig)
 	approx=tuple(map(lambda x:eval_pade(aa,bb,x),xs))
 	approx=array(approx)
 	err=(sig-approx)/sig
 	if plot:
-		plt.loglog(xs,sig)
-		plt.loglog(xs,approx)
-		# plt.ylim(-2,2)
+		plt.semilogx(xs,sig)
+		plt.semilogx(xs,approx)
+		plt.ylim((1.78e-9,3e-9))
 		plt.show()
 	return sum(err)
 
@@ -155,40 +178,20 @@ def hf(n,N):
 
 def lf(n):
 	return 1/(2*n+1)
-def twopoint(N):
-	cs=[]
-	for n in range(N):
-		cs.append(hf(N+1-n,N))
-		cs.append(0)
-	for n in range(N):
-		cs.append(lf(n))
-		cs.append(0)
-	cs.pop()
-	b=[1]*N
-	a=[1]*N
-	for i in range(N):
-		coeffs=[b[j]*cs[i-j+N] for j in range(N)]
-		a[i]=sum(coeffs)
-	print_pade(a,b)
-	return a,b
 
 if __name__=="__main__":
-	base=1e6
+	start=int(1e6)
 	step=20
-	xs=linspace(base,base+step*9,step)
+	ne=8
+	xs=list(range(start,start+(ne*step),step))
 	ys=tuple(map(L,xs))
-	coeffs=get_taylor_coeff(ddiff(xs,ys))
-	print(coeffs[::-1])
-	aa,bb=solve_system(coeffs,3,4)
-	print_pade(aa,bb)
-	# aa,bb=twopoint(5)
+	dd=ddiff(xs,ys)
+	# maclaurin_coeffs=[2.158517e-09,-1.332268e-16,-2.467162e-19,1.827528e-21,-7.614698e-24,2.030586e-26,0.000000e+00,-2.558057e-31,]
+	# aa=[5.4284e34,6.9769e40,7.0833e46,3.8223e52][::-1]
+	# bb= [-4.8976e32, 2.708e43, 2.618e49, 2.731e55, 1.256e61][::-1]
+	# sample_matrix(3,4)
+	aa,bb=solve_system(dd,3,4)
+	aa=recenter_poly(aa,start)
+	bb=recenter_poly(bb,start)
+	print_pade(aa,bb,start)
 	get_err(aa,bb,True)
-	# for i in range(1,4):
-	# 	for j in range(i+1,7-i+1):
-	# 		aa,bb=solve_system(maclaurin_coeffs,i,j)
-	# 		err=get_err(aa,bb,(i==1 and j==6))
-	# 		print(f"M={i}\tN={j}\t{err=}")
-	# plt.plot(xs,sig)
-	# plt.plot(xs,approx)
-	# plt.ylim(-2,2)
-	# plt.show()
