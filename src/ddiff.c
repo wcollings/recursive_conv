@@ -24,6 +24,12 @@ int64_t fac(int x) {
 	return (x==0?1:x*fac(x-1));
 }
 
+void scale_to_taylor(double * terms, int num_ele) {
+	for (int i=0; i < num_ele; ++i) {
+		terms[i] = terms[i]/fac(i);
+	}
+}
+
 void print_mac(float *c, int numele) {
 	printf("[");
 	for (int i=0; i < numele; ++i) {
@@ -33,26 +39,7 @@ void print_mac(float *c, int numele) {
 	printf("]\n");
 }
 
-
-double L(float f) {
-	float a=1e-9,
-			b=2.8e-9,
-			c=800e-9,
-			f0=2e4;
-	double res=(0.6366*a)*atan(-c*(f-f0))+b;
-	return res;
-}
-
-float * pade(float *C, int num_ele, int m) {
-	float ** A=malloc(sizeof(float*)*m);
-	for (int i=0; i < m; ++i) A[i]=malloc(sizeof(float)*(m+2));
-	for (int i=num_ele-1; i > m-1; --i) {
-		for (int j=0; j < m+1; ++j) {
-			A[m-i][j]=(i>=j? C[i-j]:0);
-		}
-	}
-}
-int main() {
+int test_ddiff() {
 	double * x=malloc(sizeof(double)*10);
 	double * y=malloc(sizeof(double)*10);
 	float bot=2e6;

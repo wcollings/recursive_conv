@@ -26,8 +26,8 @@ struct solver_t * init_solver(int order,struct Pade_t * eq) {
 	self->curr_t=0;
 	self->xx = calloc(sizeof(double),order);
 	self->tt = calloc(sizeof(double),order);
-	self->yy=malloc(sizeof(double*)*eq->M);
-	for (int i=0; i < eq->M; ++i) {
+	self->yy=malloc(sizeof(double*)*eq->num->num_terms);
+	for (int i=0; i < eq->num->num_terms; ++i) {
 		self->yy[i]=calloc(sizeof(double),order);
 	}
 	switch(order) {
@@ -150,10 +150,12 @@ void step(struct solver_t * SOLV, double inpt, float curr_t) {
 	double temp;
 	for (int i=0; i < SOLV->order; ++i) {
 		temp=0;
-		float * Q = SOLV->q(SOLV->eqs->B[i],delta_n);
-		temp=SOLV->yy[i][0]*Phi(SOLV->eqs->B[i],SOLV->tt[i]);
+		double sigma=SOLV->eqs->denom->terms[i];
+		double a=SOLV->eqs->num->terms[i];
+		float * Q = SOLV->q(sigma,delta_n);
+		temp=SOLV->yy[i][0]*Phi(sigma,SOLV->tt[i]);
 		for (int j=0; j <SOLV->order; ++j) {
-			temp+=SOLV->eqs->A[i]*Q[j]*SOLV->xx[j];
+			temp+=a*Q[j]*SOLV->xx[j];
 		}
 		shift(SOLV->yy[i],SOLV->order);
 		SOLV->yy[i][0]=temp;
@@ -175,10 +177,12 @@ double result(int argc, double *argv) {
 	gSOLV->xx[0]=argv[1];
 	for (int i=0; i < gSOLV->order; ++i) {
 		temp=0;
-		float * Q = gSOLV->q(gSOLV->eqs->B[i],delta_n);
-		temp=gSOLV->yy[i][0]*Phi(gSOLV->eqs->B[i],delta_n);
+		double sigma=gSOLV->eqs->denom->terms[i];
+		double a=gSOLV->eqs->num->terms[i];
+		float * Q = gSOLV->q(sigma,delta_n);
+		temp=gSOLV->yy[i][0]*Phi(sigma,delta_n);
 		for (int j=0; j <gSOLV->order; ++j) {
-			temp+=gSOLV->eqs->A[i]*Q[j]*gSOLV->xx[j];
+			temp+=a*Q[j]*gSOLV->xx[j];
 		}
 		shift(gSOLV->yy[i],gSOLV->order);
 		gSOLV->yy[i][0]=temp;

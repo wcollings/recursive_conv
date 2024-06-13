@@ -13,4 +13,11 @@
  * a table of derivatives (doubles) of length `num_ele`
 */
 double * divided_difference(double * x,double *y, int num_ele);
+
+/*
+ * Take a list of derivatives, and turn that into a Taylor sequence.
+ *
+ * T(f(x)) = sum(i=0->N) (f^(i)(a)(x-a))/i!)
+ */
+void scale_to_taylor(double * terms, int num_ele);
 #endif
