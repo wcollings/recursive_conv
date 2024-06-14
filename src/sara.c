@@ -10,15 +10,8 @@
 #include <math.h>
 #define MIN(a,b) (a<b?a:b)
 
-/*
- * `order` The order of the solver (1, 2, or 3). Least precise (but fastest) to most precise (but slowest)
- * `time` The stop time of the simulation
- * `delta_n` The time step to use for the simulation
- * `num_outputs` The number of output variables to save
- * `returns` a fully initialized Solver object
-*/
-struct solver_t * init_solver(int order,struct Pade_t * eq) {
-	struct solver_t * self = malloc(sizeof(struct solver_t));
+struct Solver_t * solver_init(int order,struct Pade_t * eq) {
+	struct Solver_t * self = malloc(sizeof(struct Solver_t));
 	printf("Creating solver obj!\n");
 	self->cb=NULL;
 	self->eqs=eq;
@@ -124,23 +117,13 @@ float * q4(float i,float delta_n) {
 	return q;
 }
 
-/*
- * Shift an array over by one, essentially dequeueing the last element
- * `arr`: the array to shift
- * `num_ele`: the size of the array
-*/
 void shift(double * arr,int num_ele) {
 	for (int i=num_ele-1; i > 0; --i) {
 		arr[i]=arr[i-1];
 	}
 }
 
-/*
- * Take a step in the time domain, advancing the solver by one time step
- * `SOLV`: an instance of the solver
- * `inpt`: The state variable (likey voltage or current) at the next time step
-*/
-void step(struct solver_t * SOLV, double inpt, float curr_t) {
+void step(struct Solver_t * SOLV, double inpt, float curr_t) {
 	// enqueue the newest input
 	shift(SOLV->xx,SOLV->order);
 	SOLV->xx[0]=inpt;
@@ -164,13 +147,13 @@ void step(struct solver_t * SOLV, double inpt, float curr_t) {
 		(*SOLV->cb)(SOLV);
 	SOLV->curr_t=curr_t;
 }
-struct solver_t * gSOLV=NULL;
+struct Solver_t * gSOLV=NULL;
 double result(int argc, double *argv) {
 	if (gSOLV==NULL) {
 		double A[]={0.5,-0.25};
 		double B[]={0,0.020833,0,-0.0020833};
 		struct Pade_t * p=Pade_init(A,B,2,4);
-		gSOLV=init_solver(2, p);
+		gSOLV=solver_init(2, p);
 	}
 	float delta_n=argv[0]-gSOLV->curr_t;
 	float temp;

@@ -2,7 +2,7 @@
 #define __DDIFF_H__
 
 /*
- * @brief Creates a divided difference table based on the x and y given.
+ * Creates a divided difference table based on the x and y given.
  * This essentially approximates `n-1` derivatives of y(x).
  * out[i] -> the ith derivative of this function
  *

@@ -1,15 +1,12 @@
 #include "../include/pade.h"
-#include "../include/poly.h"
-#include "../include/linear.h"
-#include <stdlib.h>
-#include <string.h> // just need this for memcpy
-#include <math.h>
+
 void mat_free(void ** A, int m) {
 	for (int i=0; i < m; ++i ) {
 		free(A[i]);
 	}
 	free(A);
 }
+
 void ** mat_init(int m, int n,size_t size) {
 	void ** inner = malloc(sizeof(void*)*m);
 	for (int i=0; i < m; ++i) {
@@ -17,7 +14,7 @@ void ** mat_init(int m, int n,size_t size) {
 	}
 	return inner;
 }
-struct Pade_t * Pade_init(double *A, double *B,int M, int N) {
+struct Pade_t * pade_init(double *A, double *B,int M, int N) {
 	struct Pade_t * self = malloc(sizeof(struct Pade_t));
 	self->vals=Poly;
 	self->num=malloc(sizeof(struct Polynomial_t));
@@ -30,7 +27,7 @@ struct Pade_t * Pade_init(double *A, double *B,int M, int N) {
 	memcpy(self->denom->terms,B,sizeof(double)*N);
 	return self;
 }
-struct Pade_t * Pade_init_poly(struct Polynomial_t * num, struct Polynomial_t * denom) {
+struct Pade_t * pade_init_poly(struct Polynomial_t * num, struct Polynomial_t * denom) {
 	struct Pade_t * self = malloc(sizeof(struct Pade_t));
 	self->vals=Poly;
 	int M=num->num_terms;
@@ -51,7 +48,7 @@ double eval_with_roots(struct Pade_t * self,double s) {
 	}
 	return res;
 }
-double Pade_eval(struct Pade_t * self, double s) {
+double pade_eval(struct Pade_t * self, double s) {
 	if (self->vals==Poly) {
 		double num=poly_eval(self->num, s);
 		double denom=poly_eval(self->denom, s);
@@ -61,7 +58,7 @@ double Pade_eval(struct Pade_t * self, double s) {
 		return eval_with_roots(self,s);
 	}
 }
-struct Pade_t * Pade_create_fit(struct Polynomial_t * taylor,int m) {
+struct Pade_t * pade_create_fit(struct Polynomial_t * taylor,int m) {
 	int n=taylor->num_terms-m;
 	double ** lower = mat_init(n,n+1,sizeof(double)); //NOLINT
 	for (int i=0; i > n; ++i) {
@@ -87,10 +84,10 @@ struct Pade_t * Pade_create_fit(struct Polynomial_t * taylor,int m) {
 	a_terms=mat_mul_vec(upper,b_terms,m+1,m+1);
 	flip_arr(a_terms,m+1);
 	flip_arr(b_terms,n+1);
-	return Pade_init(a_terms, b_terms, m+1, n+1);
+	return pade_init(a_terms, b_terms, m+1, n+1);
 }
 
-struct Pade_t * Pade_separate(struct Pade_t * self) {
+struct Pade_t * pade_separate(struct Pade_t * self) {
 	double ** arr=(double**)mat_init(self->denom->num_terms,
 											self->denom->num_terms+1,
 										sizeof(double));
@@ -117,7 +114,7 @@ struct Pade_t * Pade_separate(struct Pade_t * self) {
 	for (i=0; i<temp->num_terms; ++i) {
 		temp->terms[i]=arr[i][end];
 	}
-	struct Pade_t * ret= Pade_init_poly(temp, roots);
+	struct Pade_t * ret= pade_init_poly(temp, roots);
 	ret->vals=Roots;
 	poly_free(temp);
 	poly_free(roots);

@@ -1,7 +1,4 @@
 #include "../include/poly.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
 
 struct Polynomial_t * poly_init_bare(int num_terms) {
 	struct Polynomial_t * out = malloc(sizeof(struct Polynomial_t));
@@ -129,4 +126,11 @@ struct Polynomial_t * poly_recenter(struct Polynomial_t * src, float c) {
 		term=0;
 	}
 	return dest;
+}
+
+void poly_depress(struct Polynomial_t * self) {
+	double max_term = self->terms[0];
+	for (int i=0; i < self->num_terms; ++i) {
+		self->terms[i]/=max_term;
+	}
 }
