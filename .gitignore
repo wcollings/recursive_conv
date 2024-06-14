@@ -1,5 +1,6 @@
 obj/
 tags
+__pycache__
 sara_test
 .vscode/
 .pycharm/
