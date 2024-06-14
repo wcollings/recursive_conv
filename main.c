@@ -6,7 +6,7 @@
 #include "include/poly.h"
 #include "include/sara.h"
 
-void print_results(struct solver_t * SOLV) {
+void print_results(struct Solver_t * SOLV) {
 	float output=SOLV->yy[0][0] + SOLV->yy[1][0];
 	printf("%f,%f\n",SOLV->curr_t,output);
 }
@@ -34,8 +34,8 @@ int main() {
 	struct Polynomial_t * taylor = poly_init_bare(N+M+1);
 	flip_arr(taylor->terms, N+M+1);
 	poly_recenter(taylor, center);
-	struct Pade_t * approx = Pade_create_fit(taylor,M);
-	struct solver_t * solv = init_solver(2, approx);
+	struct Pade_t * approx = pade_create_fit(taylor,M);
+	struct Solver_t * solv = solver_init(2, approx);
 	solv->cb=&print_results;
 	float time=0;
 	printf("t,v\n");

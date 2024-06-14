@@ -152,7 +152,7 @@ double result(int argc, double *argv) {
 	if (gSOLV==NULL) {
 		double A[]={0.5,-0.25};
 		double B[]={0,0.020833,0,-0.0020833};
-		struct Pade_t * p=Pade_init(A,B,2,4);
+		struct Pade_t * p=pade_init(A,B,2,4);
 		gSOLV=solver_init(2, p);
 	}
 	float delta_n=argv[0]-gSOLV->curr_t;
