@@ -1,0 +1,11 @@
+{
+    "C_Cpp.default.compilerPath": "C:\\msys64\\mingw64\\bin\\gcc.exe",
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "c:\\Users\\usr\\Downloads\\recursive_conv-master\\recursive_conv",
+            "binaryPath": "c:\\Users\\usr\\Downloads\\recursive_conv-master\\recursive_conv\\sara_test",
+            "binaryArgs": []
+        }
+    ],
+    "makefile.makePath": "C:\\\\msys64\\\\usr\\\\bin\\\\make.exe"
+}
