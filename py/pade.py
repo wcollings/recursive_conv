@@ -27,7 +27,7 @@ def recenter_poly(aa:Sequence[float],center:float):
 		for j in range(len(aa)-i):
 			M=cm[i+j][j]
 			an=aa[i+j]
-			output[i]+=cm[i+j][j]*aa[i+j]*(center**(j+1))
+			output[i]+=cm[i+j][j]*aa[i+j]*(center**(j))
 	return output
 
 def print_pade(aa:Sequence[float],bb:Sequence[float], base:float=0):
