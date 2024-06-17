@@ -8,6 +8,7 @@
 #ifndef __PADE_H__
 #define __PADE_H__
 
+#include "central.h"
 #include "poly.h"
 #include "linear.h"
 #include <stdlib.h>
@@ -49,7 +50,7 @@ struct Pade_t {
 /*
  * Initialize a Pade Approximant using two arrays
 */
-struct Pade_t * pade_init(double *A, double *B,int M, int N);
+struct Pade_t * pade_init(prec_t *A, prec_t *B,int M, int N);
 
 /*
  * Initialize a Pade Approximant using two polynomials
@@ -59,17 +60,23 @@ struct Pade_t * pade_init_poly(struct Polynomial_t * num, struct Polynomial_t * 
 /*
  * Evaluate a Pade Approximant at a certain point
 */
-double pade_eval(struct Pade_t * self, double s);
+prec_t pade_eval(struct Pade_t * self, prec_t s);
 
 /*
  * Create a Pade approximant given a polynomial that hold the coefficients
  * of a series representation of an object.
- * with N elements in the polynomial, we create a Pade approximant R_{m,N,m}
+ * with N elements in the polynomial, we create a Pade approximant R_{m,N-m}
 */
 struct Pade_t * pade_create_fit(struct Polynomial_t * taylor,int m);
 
 /*
  * Perform Partial Fraction Decomposition on a given Pade Approximant
-*/
+ *
+ * `NOTE`: the returned Pade approximant holds two polynomials, but the 
+ * polynomials are not representing straight coefficients. If we say a_i is self->num[i],
+ * and b_i is self->denom[i], then these now represent (a_0)/(x-b_0) + (a_1)/(x-b_1) + ...
+ *
+ * This is also set in the field `enum valus_type_sel`, but it's good to note it yourself as well
+ */
 struct Pade_t * pade_separate(struct Pade_t * self);
 #endif

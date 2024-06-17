@@ -2,8 +2,9 @@
 #define __LINEAR_H__
 
 #include <stdlib.h>
+#include "central.h"
 
-void rref(double ** mat, int m, int n);
+void rref(prec_t ** mat, int m, int n);
 
 /*
  * multiply a matrix by a vector, with the vector on the right
@@ -15,5 +16,5 @@ void rref(double ** mat, int m, int n);
  * returns an mx1 column vector 
  *
 */
-double * mat_mul_vec(double **mat, double * v, int m, int n);
+prec_t * mat_mul_vec(prec_t **mat, prec_t * v, int m, int n);
 #endif

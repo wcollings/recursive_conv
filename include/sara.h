@@ -2,6 +2,7 @@
 #define __SOLVER_H__
 
 #include "pade.h"
+#include "central.h"
 
 struct Time_s {
 	const float T; /* The final time of the simulation */
@@ -17,11 +18,11 @@ void step_time(struct Time_s * t);
 */
 struct Solver_t {
 	struct Pade_t * eqs;
-	double curr_t;
+	prec_t curr_t;
 	int order;
-	double * tt;
-	double * xx;
-	double ** yy;
+	prec_t * tt;
+	prec_t * xx;
+	prec_t ** yy;
 	float * (*q)(float,float);
 	void (*cb)(struct Solver_t *); /* A callback function (optional) for printing intermediate results etc.*/
 };
@@ -46,19 +47,19 @@ struct Solver_t * solver_init(int order,struct Pade_t * eq);
  * `arr`: the array to shift
  * `num_ele`: the size of the array
 */
-void shift(double * arr,int num_ele);
+void shift(prec_t * arr,int num_ele);
 
 /*
  * Take a step in the time domain, advancing the solver by one time step
  * `SOLV`: an instance of the solver
  * `inpt`: The state variable (likey voltage or current) at the next time step
 */
-void step(struct Solver_t * SOLV, double inpt, float curr_t);
+void step(struct Solver_t * SOLV, prec_t inpt, float curr_t);
 /*
  * Params:
  *  - current time
  *  - voltage across part
 */
-double result(int argc, double *argv);
+prec_t result(int argc, prec_t *argv);
 
 #endif

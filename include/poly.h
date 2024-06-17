@@ -9,6 +9,7 @@
 #ifndef __POLY_H__
 #define __POLY_H__
 
+#include "central.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -20,7 +21,7 @@
  */
 struct Polynomial_t {
 	int num_terms;
-	double * terms; /* The terms are in highest-order to lowest-order*/
+	prec_t * terms; /* The terms are in highest-order to lowest-order*/
 };
 
 
@@ -48,7 +49,7 @@ struct Polynomial_t * poly_mul(struct Polynomial_t * a, struct Polynomial_t * b)
 /*
  * Evaluate a polynomial `a` at `val`
 */
-double poly_eval(struct Polynomial_t * a, double val);
+prec_t poly_eval(struct Polynomial_t * a, prec_t val);
 
 /*
  * Pretty print the polynomial
@@ -56,29 +57,35 @@ double poly_eval(struct Polynomial_t * a, double val);
 void poly_print(struct Polynomial_t * p);
 
 /*
- * perform Sythetic division with a 1st order normalized polynomial (a.k.a. (x-z))
+ * perform sythetic division with a 1st order normalized polynomial (a.k.a. (x-a_0))
  *
- * The second polynomial (which we're dividing by) is just passed by the a_0 term
+ * The second polynomial (which we're dividing by) is just passed by the a_0 term. Assumes that 
+ * a_0 is a root of the first polynomial as well, i.e. there will be no remainder. 
  */
-struct Polynomial_t * poly_sd_1term(struct Polynomial_t * num, double z);
+struct Polynomial_t * poly_sd_1term(struct Polynomial_t * num, prec_t z);
 
 /*
  * Use some root finding algorithm to find all the (real) roots of the given polynomial
+ *
+ * `NOTE`: the returned values of the polynomial are not coefficients! Call c_i self->values[i],
+ * then the returned polynomial is encoded as (x-c_0)(x-c_1)...(x-c_n)
  */
 struct Polynomial_t * poly_get_roots(struct Polynomial_t * num);
 
 /*
  * Recenters a polynomial's representation around a given point.
+ *
+ * `NOTE`: should this just act on the original object, return void?
 */
-struct Polynomial_t * poly_recenter(struct Polynomial_t * src, float c);
+struct Polynomial_t * poly_recenter(struct Polynomial_t * src, prec_t c);
 
 /*
- * Turn a polynomial into a depressed polynomial, where the highest coefficient is 1,
+ * Turn a polynomial into a depressed polynomial, where the highest coefficient is 1
  */
 void poly_depress(struct Polynomial_t * self);
 
 /*
  * Convenience function to reverse an array
 */
-void flip_arr(double * arr, int n);
+void flip_arr(prec_t * arr, int n);
 #endif

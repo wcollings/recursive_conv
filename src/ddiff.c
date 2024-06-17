@@ -4,16 +4,18 @@
 #include <string.h>
 #include <math.h>
 #include "../include/ddiff.h"
-double * divided_difference(double * x,double *y, int num_ele) {
-	double * out=malloc(sizeof(double)*num_ele);
+prec_t * divided_difference(prec_t * x,prec_t *y, int num_ele) {
+	prec_t * out=malloc(sizeof(prec_t)*num_ele);
 	for (int i=0; i < num_ele; ++i)
 		out[i]=y[i];
 	for (int i=1; i < num_ele+1; ++i) {
 		for (int j=num_ele-1; j > i; j--) {
-			double num=out[j]-out[j-1];
-			double den=x[j]-x[j-i];
+			prec_t num=out[j]-out[j-1];
+			prec_t den=x[j]-x[j-i];
 			out[j]=num/den;
+#if DEBUG_PRINTS
 			printf("i=%d j=%d d=%e\n",i,j,out[j]);
+#endif
 		}
 	}
 	out[num_ele-1]=(out[num_ele-1]-out[num_ele-2])/(x[num_ele-1]-x[0]);
@@ -24,7 +26,7 @@ int64_t fac(int x) {
 	return (x==0?1:x*fac(x-1));
 }
 
-void scale_to_taylor(double * terms, int num_ele) {
+void scale_to_taylor(prec_t * terms, int num_ele) {
 	for (int i=0; i < num_ele; ++i) {
 		terms[i] = terms[i]/fac(i);
 	}
@@ -40,14 +42,14 @@ void print_mac(float *c, int numele) {
 }
 
 int test_ddiff() {
-	double * x=malloc(sizeof(double)*10);
-	double * y=malloc(sizeof(double)*10);
+	prec_t * x=malloc(sizeof(prec_t)*10);
+	prec_t * y=malloc(sizeof(prec_t)*10);
 	float bot=2e6;
 	for (int i=0; i < 10; ++i) {
 		x[i]=bot+(i*20);
 		y[i]=L(x[i]);
 	}
-	double * dd=divided_difference(x, y, 10);
+	prec_t * dd=divided_difference(x, y, 10);
 	printf("x\t\ty\t\tdd\n");
 	for (int i=0; i < 10; ++i) {
 		printf("%e\t%e\t%e\n",x[i],y[i],dd[i]);

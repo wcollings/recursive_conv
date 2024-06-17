@@ -17,11 +17,11 @@ struct Solver_t * solver_init(int order,struct Pade_t * eq) {
 	self->eqs=eq;
 	self->order=order;
 	self->curr_t=0;
-	self->xx = calloc(sizeof(double),order);
-	self->tt = calloc(sizeof(double),order);
-	self->yy=malloc(sizeof(double*)*eq->num->num_terms);
+	self->xx = calloc(sizeof(prec_t),order);
+	self->tt = calloc(sizeof(prec_t),order);
+	self->yy=malloc(sizeof(prec_t*)*eq->num->num_terms);
 	for (int i=0; i < eq->num->num_terms; ++i) {
-		self->yy[i]=calloc(sizeof(double),order);
+		self->yy[i]=calloc(sizeof(prec_t),order);
 	}
 	switch(order) {
 		default:
@@ -117,24 +117,24 @@ float * q4(float i,float delta_n) {
 	return q;
 }
 
-void shift(double * arr,int num_ele) {
+void shift(prec_t * arr,int num_ele) {
 	for (int i=num_ele-1; i > 0; --i) {
 		arr[i]=arr[i-1];
 	}
 }
 
-void step(struct Solver_t * SOLV, double inpt, float curr_t) {
+void step(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
 	// enqueue the newest input
 	shift(SOLV->xx,SOLV->order);
 	SOLV->xx[0]=inpt;
 	shift(SOLV->tt,SOLV->order);
 	SOLV->tt[0]=curr_t-SOLV->curr_t;
-	double delta_n=SOLV->tt[0];
-	double temp;
+	prec_t delta_n=SOLV->tt[0];
+	prec_t temp;
 	for (int i=0; i < SOLV->order; ++i) {
 		temp=0;
-		double sigma=SOLV->eqs->denom->terms[i];
-		double a=SOLV->eqs->num->terms[i];
+		prec_t sigma=SOLV->eqs->denom->terms[i];
+		prec_t a=SOLV->eqs->num->terms[i];
 		float * Q = SOLV->q(sigma,delta_n);
 		temp=SOLV->yy[i][0]*Phi(sigma,SOLV->tt[i]);
 		for (int j=0; j <SOLV->order; ++j) {
@@ -148,10 +148,10 @@ void step(struct Solver_t * SOLV, double inpt, float curr_t) {
 	SOLV->curr_t=curr_t;
 }
 struct Solver_t * gSOLV=NULL;
-double result(int argc, double *argv) {
+prec_t result(int argc, prec_t *argv) {
 	if (gSOLV==NULL) {
-		double A[]={0.5,-0.25};
-		double B[]={0,0.020833,0,-0.0020833};
+		prec_t A[]={0.5,-0.25};
+		prec_t B[]={0,0.020833,0,-0.0020833};
 		struct Pade_t * p=pade_init(A,B,2,4);
 		gSOLV=solver_init(2, p);
 	}
@@ -160,8 +160,8 @@ double result(int argc, double *argv) {
 	gSOLV->xx[0]=argv[1];
 	for (int i=0; i < gSOLV->order; ++i) {
 		temp=0;
-		double sigma=gSOLV->eqs->denom->terms[i];
-		double a=gSOLV->eqs->num->terms[i];
+		prec_t sigma=gSOLV->eqs->denom->terms[i];
+		prec_t a=gSOLV->eqs->num->terms[i];
 		float * Q = gSOLV->q(sigma,delta_n);
 		temp=gSOLV->yy[i][0]*Phi(sigma,delta_n);
 		for (int j=0; j <gSOLV->order; ++j) {

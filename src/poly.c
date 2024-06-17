@@ -1,9 +1,12 @@
 #include "../include/poly.h"
+#include <math.h>
+
+#define SUMUP(x) (int)(x*(x+1))/2
 
 struct Polynomial_t * poly_init_bare(int num_terms) {
 	struct Polynomial_t * out = malloc(sizeof(struct Polynomial_t));
 	out->num_terms=num_terms;
-	out->terms = calloc(num_terms,sizeof(double));
+	out->terms = calloc(num_terms,sizeof(prec_t));
 	return out;
 }
 struct Polynomial_t * poly_add(struct Polynomial_t * a, struct Polynomial_t * b) {
@@ -15,7 +18,7 @@ struct Polynomial_t * poly_add(struct Polynomial_t * a, struct Polynomial_t * b)
 		b=lhs;
 	}
 	res->num_terms=a->num_terms;
-	res->terms=malloc(sizeof(double)*res->num_terms);
+	res->terms=malloc(sizeof(prec_t)*res->num_terms);
 	int i=0;
 	for (; i < b->num_terms; ++i) {
 		res->terms[i]=a->terms[i]+b->terms[i];
@@ -34,7 +37,7 @@ struct Polynomial_t * poly_mul(struct Polynomial_t * a, struct Polynomial_t * b)
 		b=lhs;
 	}
 	res->num_terms=a->num_terms+b->num_terms-1;
-	res->terms=calloc(res->num_terms,sizeof(double));
+	res->terms=calloc(res->num_terms,sizeof(prec_t));
 	for (int i=0; i < a->num_terms; ++i) {
 		for (int j=0; j < b->num_terms; ++j ) {
 			res->terms[i+j]=a->terms[i]*b->terms[i];
@@ -42,8 +45,8 @@ struct Polynomial_t * poly_mul(struct Polynomial_t * a, struct Polynomial_t * b)
 	}
 	return res;
 }
-double poly_eval(struct Polynomial_t * a, double val) {
-	double res=a->terms[0];
+prec_t poly_eval(struct Polynomial_t * a, prec_t val) {
+	prec_t res=a->terms[0];
 	for (int i=1; i < a->num_terms; ++i) {
 		res=a->terms[i]+val*res;
 	}
@@ -56,10 +59,10 @@ void poly_print(struct Polynomial_t * p) {
 	}
 }
 
-struct Polynomial_t * poly_sd_1term(struct Polynomial_t * num, double z) {
+struct Polynomial_t * poly_sd_1term(struct Polynomial_t * num, prec_t z) {
 	struct Polynomial_t * res=malloc(sizeof(struct Polynomial_t));
 	res->num_terms=num->num_terms-1;
-	res->terms=malloc(sizeof(double)*res->num_terms);
+	res->terms=malloc(sizeof(prec_t)*res->num_terms);
 	res->terms[0]=1;
 	for (int i=1; i < res->num_terms-1; ++i) {
 		res->terms[i]=res->terms[i-1]*z+num->terms[i];
@@ -70,7 +73,7 @@ struct Polynomial_t * poly_sd_1term(struct Polynomial_t * num, double z) {
 struct Polynomial_t * poly_get_roots(struct Polynomial_t * p) {
 	struct Polynomial_t * roots = malloc(sizeof(struct Polynomial_t));
 	roots->num_terms=p->num_terms;
-	roots->terms=malloc(sizeof(double)*roots->num_terms);
+	roots->terms=malloc(sizeof(prec_t)*roots->num_terms);
 	
 	// find the roots
 
@@ -81,16 +84,28 @@ void poly_free(struct Polynomial_t * p) {
 	free(p);
 }
 
-void flip_arr(double * arr, int n) {
-	double temp;
+void flip_arr(prec_t * arr, int n) {
+	prec_t temp;
 	for (int i=0; i < (int)n/2; ++i) {
 		temp=arr[i];
 		arr[i]=arr[n-i-1];
 		arr[n-i-1]=temp;
 	}
 }
-#define SUMUP(x) (int)(x*(x+1))/2
 
+
+/*
+ * Creates and returns an array containing the coefficients of pascal's triangle.
+ * This is used primarily in recentering a polynomial. Note that this is a 1d array representing
+ * a ragged 2d array. Each row is one element longer than the last. The returned array looks like:
+ *
+ * [1 | 1 1 | 1 2 1 | 1 3 3 1 |...]
+ *
+ * If the `invert` flag is set to 1, every even element of each row is inverted. So the result will instead be:
+ *
+ * [ 1 | 1 -1 | 1 -2 1 | 1 -3 3 -1 |...]
+ *
+*/
 int * pascal(int row, int invert) {
 	int num_ele = SUMUP(row+1)-1;
 	int * tri = malloc(sizeof(int)*num_ele);
@@ -113,14 +128,14 @@ int * pascal(int row, int invert) {
 	return tri;
 }
 
-struct Polynomial_t * poly_recenter(struct Polynomial_t * src, float c) {
+struct Polynomial_t * poly_recenter(struct Polynomial_t * src, prec_t c) {
 	int N = src->num_terms;
 	int * tri = pascal(N, 1);
 	struct Polynomial_t * dest = poly_init_bare(N);
 	for (int i=0; i < N; ++i) {
-		double term = 0;
+		prec_t term = 0;
 		for (int j = 0; j <= i; ++i) {
-			term += tri[SUMUP(N-j-1)+(i-j)]*src->terms[j]*pow(c,i-j);
+			term += tri[SUMUP(N-j-1)+(i-j)]*src->terms[j]*pow(c,i-j); //NOLINT
 		}
 		dest->terms[i] = term;
 		term=0;
@@ -129,8 +144,47 @@ struct Polynomial_t * poly_recenter(struct Polynomial_t * src, float c) {
 }
 
 void poly_depress(struct Polynomial_t * self) {
-	double max_term = self->terms[0];
+	prec_t max_term = self->terms[0];
 	for (int i=0; i < self->num_terms; ++i) {
 		self->terms[i]/=max_term;
 	}
+}
+
+struct Polynomial_t * roots_quartic(struct Polynomial_t * self) {
+	
+}
+
+struct Polynomial_t * roots_binomial(struct Polynomial_t * self) {
+	prec_t b,c;
+	struct Polynomial_t * roots = poly_init_bare(2);
+	if (self->terms[0] != 1) {
+		poly_depress(self);
+	}
+	b=self->terms[1];
+	c=self->terms[2];
+	if (b > 0) {
+		if (pow(b,2) > c) {
+			roots->terms[0] = -b-sqrt(pow(b,2)-c);
+			roots->terms[1] = c/roots->terms[0];
+		}
+		// if the roots are complex
+		// TODO: handle this more properly, once I decide what that means
+		else {
+			roots->terms[0] = INFINITY;
+			roots->terms[1] = INFINITY;
+		}
+	}
+	else {
+		if (pow(b,2) > c) {
+			roots->terms[0] = -b+sqrt(pow(b,2)-c);
+			roots->terms[1] = c/roots->terms[0];
+
+		}
+		// if the roots are complex
+		else {
+			roots->terms[0] = INFINITY;
+			roots->terms[1] = INFINITY;
+		}
+	}
+	return roots;
 }

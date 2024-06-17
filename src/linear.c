@@ -1,11 +1,11 @@
 #include "../include/linear.h"
 
-void rref(double ** mat, int m, int n) {
+void rref(prec_t ** mat, int m, int n) {
 }
 
-void double_sort(double **mat,int m, int n) {
-	int *pivots=malloc(sizeof(double)*n);
-	int *temp=malloc(sizeof(double)*n);
+void prec_t_sort(prec_t **mat,int m, int n) {
+	int *pivots=malloc(sizeof(prec_t)*n);
+	int *temp=malloc(sizeof(prec_t)*n);
 	for (int i=0;i < n;++i) {
 		temp[i]=i;
 	}
@@ -19,8 +19,8 @@ void double_sort(double **mat,int m, int n) {
 	free(pivots);
 }
 
-double * mat_mul_vec(double **mat, double * v, int m, int n) {
-	double * res = calloc(m,sizeof(double));
+prec_t * mat_mul_vec(prec_t **mat, prec_t * v, int m, int n) {
+	prec_t * res = calloc(m,sizeof(prec_t));
 	for (int i=0; i < m; ++i) {
 		for (int j=0; j < n; ++j) {
 			res[i]+=mat[i][j]*v[j];
