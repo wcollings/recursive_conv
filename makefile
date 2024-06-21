@@ -1,6 +1,6 @@
 IDIR=include
 cc=gcc
-CFLAGS=-I$(IDIR) -fpermissive
+CFLAGS=-I$(IDIR) -fpermissive -fPIC
 LIBS=-lm
 _DEPS=pade.h sara.h poly.h linear.h ddiff.h
 DEPS=$(patsubst %,$(IDIR)/%,$(_DEPS))
@@ -13,6 +13,9 @@ $(ODIR)/%.o: src/%.c $(DEPS)
 
 sara_test:$(OBJ)
 	gcc -o $@ main.c $^ $(CFLAGS) $(LIBS)
+
+sara_lib:$(OBJ)
+	gcc -shared -o libSARA.so $^ $(CFLAGS) $(LIBS)
 
 .phony: clean
 
