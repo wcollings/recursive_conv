@@ -52,14 +52,14 @@ void double_sort(double** mat, int m, int n) {
 	double maxColElem;							// keep track of largest elem in current column
 	double* temp = malloc(sizeof(double)*m);	// used to rearrange matrix rows by changing pointers
 	for (int col = 0; col < n - 1; ++col) {
-		maxColElem = abs(mat[0][col]);
+		maxColElem = fabs(mat[0][col]);
 		maxColElemIndex[col] = 0;
 		for (int row = 0; row < m; ++row)
 		{
 			temp[col] = mat[row][col];
 			if (fabs(temp[col]) > maxColElem)
 			{
-				maxColElem = abs(mat[row][col]);			// store highest value in column, i.e pivot variable
+				maxColElem = fabs(mat[row][col]);			// store highest value in column, i.e pivot variable
 				maxColElemIndex[col] = row;						// store the row index of the max element, so we can rearrange the matrix accordingly
 			}
 		}
