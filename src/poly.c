@@ -133,7 +133,7 @@ struct Polynomial_t * poly_recenter(struct Polynomial_t * src, prec_t c) {
 	struct Polynomial_t * dest = poly_init_bare(N);
 	for (int i=0; i < N; ++i) {
 		prec_t term = 0;
-		for (int j = 0; j <= i; ++i) {
+		for (int j = 0; j<=i; ++j) {
 			term += tri[SUMUP(N-j-1)+(i-j)]*src->terms[j]*pow(c,i-j); //NOLINT
 		}
 		dest->terms[i] = term;

@@ -1,6 +1,6 @@
 IDIR=include
 cc=gcc
-CFLAGS=-I$(IDIR) -fpermissive -fPIC
+CFLAGS=-I$(IDIR) -fpermissive -fPIC -g
 LIBS=-lm
 _DEPS=pade.h sara.h poly.h linear.h ddiff.h
 DEPS=$(patsubst %,$(IDIR)/%,$(_DEPS))

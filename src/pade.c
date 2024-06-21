@@ -57,7 +57,7 @@ struct Pade_t * pade_create_fit(struct Polynomial_t * taylor,int m) {
 		}
 		lower[i][n]=-taylor->terms[m+i+1];
 	}
-	rref(lower,n+1,n);
+	rref(lower,n,n+1);
 	prec_t *a_terms, *b_terms;
 	b_terms=malloc(sizeof(prec_t)*(n+1));
 	b_terms[0]=1;

@@ -16,25 +16,20 @@ void ** mat_init(int m, int n,size_t size) {
 	}
 	return inner;
 }
-void rref(prec_t ** mat, int m, int n){
+void rref(prec_t ** mat, int m, int n) {
 	int pivotCoeff, otherCoeff;
-	for (int col = 0; col < m; ++col)
-	{
-		for (int row = 0; row < m; ++row)
-		{
-			if (row != col && mat[row][col] != 0)
-			{
+	for (int col = 0; col < m; ++col) {
+		for (int row = 0; row < m; ++row) {
+			if (row != col && mat[row][col] != 0) {
 				pivotCoeff = mat[col][col];
 				otherCoeff = mat[row][col];
-				for (int k = 0; k < n; ++k)
-				{
+				for (int k = 0; k < n; ++k) {
 					mat[row][k] = (pivotCoeff * mat[row][k]) - (otherCoeff * mat[col][k]);
 				}
 			}
 		}
 	}
-	for (int row = 0; row < m; ++row)
-	{
+	for (int row = 0; row < m; ++row) {
 		mat[row][n - 1] = mat[row][n - 1] / mat[row][row];
 		mat[row][row] = 1;
 	}

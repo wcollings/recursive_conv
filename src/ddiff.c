@@ -47,11 +47,12 @@ int test_ddiff() {
 	float bot=2e6;
 	for (int i=0; i < 10; ++i) {
 		x[i]=bot+(i*20);
-		y[i]=L(x[i]);
+		y[i]=x[i];
 	}
 	prec_t * dd=divided_difference(x, y, 10);
 	printf("x\t\ty\t\tdd\n");
 	for (int i=0; i < 10; ++i) {
 		printf("%e\t%e\t%e\n",x[i],y[i],dd[i]);
 	}
+	return 0;
 }
