@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include "central.h"
 
+void mat_free(void ** A, int m);
+void ** mat_init(int m, int n,size_t size);
 void rref(prec_t ** mat, int m, int n);
 
 /*

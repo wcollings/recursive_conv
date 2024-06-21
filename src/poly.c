@@ -272,4 +272,3 @@ struct Polynomial_t * roots_trinomial(struct Polynomial_t * self) {
 		zeros[num_zeros++]=newton(self,start_locs[i],1e-8)+shift_factor;
 	}
 }
-

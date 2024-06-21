@@ -2,6 +2,20 @@
 #include <math.h>
 #include "../include/linear.h"
 
+void mat_free(void ** A, int m) {
+	for (int i=0; i < m; ++i ) {
+		free(A[i]);
+	}
+	free(A);
+}
+
+void ** mat_init(int m, int n,size_t size) {
+	void ** inner = malloc(sizeof(void*)*m);
+	for (int i=0; i < m; ++i) {
+		inner[i] = malloc(size*n);
+	}
+	return inner;
+}
 void rref(prec_t ** mat, int m, int n){
 	int pivotCoeff, otherCoeff;
 	for (int col = 0; col < m; ++col)
@@ -65,13 +79,8 @@ void double_sort(double** mat, int m, int n) {
 			}
 		}
 	}
-
-	double ** sortedMatrix = malloc(sizeof(double*)*m);
-	for (int i = 0; i < m; ++i)
-	{
-		sortedMatrix[i] = malloc(sizeof(double) * n);
-	}
-
+	
+	double ** sortedMatrix = mat_init(m,n,sizeof(double)); //NOLINT
 	for (int i = 0; i < m; ++i) {
 		sortedMatrix[i] = mat[maxColElemIndex[i]];
 	}
@@ -79,9 +88,8 @@ void double_sort(double** mat, int m, int n) {
 	for (int i = 0; i < m; ++i) {
 		mat[i] = sortedMatrix[i];
 	}
-	//mat = sortedMatrix;
 
-
+	mat_free(sortedMatrix,m); //NOLINT
 	free(temp);
 }
 

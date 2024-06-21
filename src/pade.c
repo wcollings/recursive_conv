@@ -1,19 +1,5 @@
 #include "../include/pade.h"
 
-void mat_free(void ** A, int m) {
-	for (int i=0; i < m; ++i ) {
-		free(A[i]);
-	}
-	free(A);
-}
-
-void ** mat_init(int m, int n,size_t size) {
-	void ** inner = malloc(sizeof(void*)*m);
-	for (int i=0; i < m; ++i) {
-		inner[i] = malloc(size*n);
-	}
-	return inner;
-}
 
 struct Pade_t * pade_init(prec_t *A, prec_t *B,int M, int N) {
 	struct Pade_t * self = malloc(sizeof(struct Pade_t));
