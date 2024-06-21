@@ -34,7 +34,7 @@ class Poly:
 		if len(self) == 3:
 			return bi_find_roots(self)
 		elif len(self) == 4:
-			return cubic_find_roots(self)
+			return cubic_find_roots_new(self)
 		elif len(self)==5:
 			return quart_find_roots(self)
 		else:
@@ -102,7 +102,7 @@ class Poly:
 				if last_val == v:
 					res[-1]+="^2"
 				if isinstance(v,complex):
-					res.append(f"(x{-v.real:+}{-v.imag:+})")
+					res.append(f"(x{-v.real:+1.3}{-v.imag:+1.3}j)")
 				else:
 					res.append(f"(x{-v:+})")
 				last_val = v
@@ -165,18 +165,27 @@ def cubic_find_roots_new(p:Poly):
 	sel = -(b/2)**2 <= (a/3)**3
 	print("this eq is ", end='')
 	if sel:
-		print("easy")
+		print("easier")
 	else:
 		print("harder")
-	D=complex(-b/2, sqrt(-(a/3)**3-(b/2)**2))
-	z=D**(1./3)
-	print(f"{z=}")
-	z0=2*z.real
-	z1=-z.real + sqrt(3)*z.imag
-	z2=-z.real - sqrt(3)*z.imag
-	print(z0)
-	print(z1)
-	print(z2)
+	Q = a/3
+	R = b/2
+	D = Q**3 + R**2
+	S = (R + sqrt(D))**(1/3)
+	T = (R - sqrt(D))**(1/3)
+	print(f'{D=}')
+	print(f'{S=}')
+	print(f'{T=}')
+	z0 = (S+T)
+	z1 = complex(-(S+T)/2,sqrt(3)/2*(S-T))
+	z2 = complex(-(S+T)/2,-sqrt(3)/2*(S-T))
+	# D=complex(-b/2, sqrt(-(a/3)**3-(b/2)**2))
+	# z=D**(1./3)
+	# print(f"{z=}")
+	# z0=2*z.real
+	# z1=-z.real + sqrt(3)*z.imag
+	# z2=-z.real - sqrt(3)*z.imag
+	return Poly([z0,z1,z2],roots=True)
 	
 
 	
