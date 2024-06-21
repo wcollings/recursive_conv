@@ -65,7 +65,11 @@ void double_sort(double** mat, int m, int n) {
 		}
 	}
 
-	double ** sortedMatrix = malloc(sizeof(double*)*n);
+	double ** sortedMatrix = malloc(sizeof(double*)*m);
+	for (int i = 0; i < m; ++i)
+	{
+		sortedMatrix[i] = malloc(sizeof(double) * n);
+	}
 
 	for (int i = 0; i < m; ++i) {
 		sortedMatrix[i] = mat[maxColElemIndex[i]];
