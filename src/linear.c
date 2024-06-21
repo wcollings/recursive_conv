@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <math.h>
+#include "../include/linear.h"
 
-void rref(double** mat, int m, int n) {
+void rref(prec_t ** mat, int m, int n){
 	int pivotCoeff, otherCoeff;
 	for (int col = 0; col < m; ++col)
 	{
