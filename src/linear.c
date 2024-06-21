@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <math.h>
 
 void rref(double** mat, int m, int n) {
 	int pivotCoeff, otherCoeff;
@@ -49,14 +50,14 @@ void double_sort(double** mat, int m, int n) {
 	// the column vector we're currently processing
 	int maxColElemIndex[m];						// index = col num; value at index = index of row with highest value of that col
 	double maxColElem;							// keep track of largest elem in current column
-	double** temp = malloc(sizeof(double) * m);	// used to rearrange matrix rows by changing pointers
-	for (int i = 0; i < n - 1; ++i) {
+	double* temp = malloc(sizeof(double));	// used to rearrange matrix rows by changing pointers
+	for (int col = 0; col < n - 1; ++col) {
 		maxColElem = abs(mat[0][i]);
 		maxColElemIndex[i] = 0;
-		for (int j = 0; j < m; ++j)
+		for (int row = 0; row < m; ++row)
 		{
-			temp[i] = mat[j][i];
-			if (abs(temp[i]) > maxColElem)
+			temp[col] = mat[row][col];
+			if (fabs(temp[col]) > maxColElem)
 			{
 				maxColElem = abs(mat[j][i]);			// store highest value in column, i.e pivot variable
 				maxColElemIndex[i] = j;						// store the row index of the max element, so we can rearrange the matrix accordingly
@@ -64,12 +65,14 @@ void double_sort(double** mat, int m, int n) {
 		}
 	}
 
+	double ** sortedMatrix = malloc(sizeof(double) * m);
+
 	for (int i = 0; i < m; ++i) {
-		temp[i] = mat[maxColElemIndex[i]];
+		sortedMatrix[i] = mat[maxColElemIndex[i]];
 	}
 
 	for (int i = 0; i < m; ++i) {
-		mat[i] = temp[i];
+		mat[i] = sortedMatrix[i];
 	}
 	//mat = sortedMatrix;
 
