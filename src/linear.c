@@ -89,7 +89,7 @@ void double_sort(prec_c_t ** mat, int m, int n) {
 }
 
 prec_c_t * mat_mul_vec(prec_c_t **mat, prec_c_t * v, int m, int n) {
-	prec_t * res = calloc(m,sizeof(prec_t));
+	prec_c_t * res = calloc(m,sizeof(prec_t));
 	for (int i=0; i < m; ++i) {
 		for (int j=0; j < n; ++j) {
 			res[i]+=mat[i][j]*v[j];
