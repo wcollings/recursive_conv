@@ -16,7 +16,7 @@ void ** mat_init(int m, int n,size_t size) {
 	}
 	return inner;
 }
-void rref(prec_t ** mat, int m, int n) {
+void rref(prec_c_t ** mat, int m, int n) {
 	int pivotCoeff, otherCoeff;
 	for (int col = 0; col < m; ++col) {
 		for (int row = 0; row < m; ++row) {
@@ -54,28 +54,28 @@ void rref(prec_t ** mat, int m, int n) {
  * meow :3
  *
 */
-void double_sort(double** mat, int m, int n) {
+void double_sort(prec_c_t ** mat, int m, int n) {
 
 	// I figured it would be easiest to do this one column at a time, so `temp` was supposed to be
 	// the column vector we're currently processing
-	int* maxColElemIndex = malloc(sizeof(int)*m);						// index = col num; value at index = index of row with highest value of that col
+	int * maxColElemIndex = malloc(sizeof(int)*m);						// index = col num; value at index = index of row with highest value of that col
 	double maxColElem;							// keep track of largest elem in current column
-	double* temp = malloc(sizeof(double)*m);	// used to rearrange matrix rows by changing pointers
+	prec_c_t * temp = malloc(sizeof(prec_c_t)*m);	// used to rearrange matrix rows by changing pointers
 	for (int col = 0; col < n - 1; ++col) {
-		maxColElem = fabs(mat[0][col]);
+		maxColElem = cabs(mat[0][col]);
 		maxColElemIndex[col] = 0;
 		for (int row = 0; row < m; ++row)
 		{
 			temp[col] = mat[row][col];
-			if (fabs(temp[col]) > maxColElem)
+			if (cabs(temp[col]) > maxColElem)
 			{
-				maxColElem = fabs(mat[row][col]);			// store highest value in column, i.e pivot variable
+				maxColElem = cabs(mat[row][col]);			// store highest value in column, i.e pivot variable
 				maxColElemIndex[col] = row;						// store the row index of the max element, so we can rearrange the matrix accordingly
 			}
 		}
 	}
 	
-	double ** sortedMatrix = mat_init(m,n,sizeof(double)); //NOLINT
+	prec_c_t ** sortedMatrix = mat_init(m,n,sizeof(prec_c_t)); //NOLINT
 	for (int i = 0; i < m; ++i) {
 		sortedMatrix[i] = mat[maxColElemIndex[i]];
 	}
@@ -88,7 +88,7 @@ void double_sort(double** mat, int m, int n) {
 	free(temp);
 }
 
-prec_t * mat_mul_vec(prec_t **mat, prec_t * v, int m, int n) {
+prec_c_t * mat_mul_vec(prec_c_t **mat, prec_c_t * v, int m, int n) {
 	prec_t * res = calloc(m,sizeof(prec_t));
 	for (int i=0; i < m; ++i) {
 		for (int j=0; j < n; ++j) {
