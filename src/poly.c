@@ -205,70 +205,32 @@ prec_t newton(struct Polynomial_t * f, prec_t xn, prec_t err) {
 	return xn;
 }
 
-struct Polynomial_t * roots_trinomial(struct Polynomial_t * self) {
-	struct Polynomial_t * roots = poly_init_bare(3);
-	for (int i=0; i < self->num_terms; ++i) {
-		roots->terms[i]=self->terms[i];
-	}
-	if (self->terms[0] != 1 ) {
-		poly_depress(roots);
-	}
-	prec_t shift_factor = 0;
-	prec_t bp,cp;
-	if (self->terms[1] !=0) {
-		prec_t b = self->terms[1];
-		shift_factor=b/3;
-		roots = poly_recenter(roots,b/3);
-	}
-	bp = -roots->terms[2];
-	cp = roots->terms[3];
-	int num_zeros=0;
-	prec_t start_locs[4] = {NAN,NAN,NAN,NAN},
-	zeros[4] = {NAN,NAN,NAN,NAN};
-	/* 4 because I want a maximum of 3, but the last element will be NULl. */
+prec_c_t ccbrt(prec_c_t z) {
+	prec_t r = cabs(z);
+	prec_t theta = carg(z);
+	return cbrt(r)*cexp(I*theta/3);
+}
 
-	// NOTE: see the documentation (online) for wtf is going on here. Got this from a textbook.
-	// The number comments refer to which decision box that corresponds to
-	// 1.
-	if (bp > 0) {
-		// 2.
-		if (fabs(cp) == 2*pow(bp/3,1.5)) {
-			zeros[0] = -sqrt(bp/3)*signbit(cp);
-			zeros[1] = -sqrt(bp/3)*signbit(cp);
-			start_locs[0] = (cp/2/bp + signbit(cp)*sqrt(bp));
-			num_zeros = 2;
-		}
-		else {
-			// 3.
-			if (fabs(cp) < 2*pow(bp/3,1.5)) {
-				if (cp==0) {
-					start_locs[0]=(1./2/bp + sqrt(bp));
-					start_locs[1]=(1./2/bp - sqrt(bp));
-					start_locs[2]=(0);
-				} else {
-					start_locs[0]=(cp/2/bp + signbit(cp)*sqrt(bp));
-					start_locs[1]=(cp/2/bp - signbit(cp)*sqrt(bp));
-					start_locs[2]=(-cp/bp);
-				}
-			} else {
-				// 4.
-				if (pow(cp,2) > fabs(pow(bp,3))) {
-					start_locs[0] = pow(cp,1./3);
-				} else {
-					start_locs[0]=(cp/2/bp + signbit(cp)*sqrt(bp));
-				}
-			}
-		}
-	} else {
-		// 5.
-		if (pow(cp,2) > fabs(pow(bp,3))) {
-			start_locs[0] = pow(cp,1./3);
-		} else {
-			start_locs[0]=-cp/2/bp;
-		}
+struct Polynomial_t * roots_trinomial(struct Polynomial_t * self) {
+	if (self->terms[0] != 1) {
+		poly_depress(self);
 	}
-	int i=0;
-	while (start_locs[i] != NAN) {
-		zeros[num_zeros++]=newton(self,start_locs[i],1e-8)+shift_factor;
+	struct Polynomial_t * inner = self;
+	int inner_free = 0;
+	if (self->terms[1] != 0) {
+		inner = poly_recenter(self,self->terms[1]/3);
+		inner_free = 1;
 	}
+	prec_t Q = inner->terms[2]/3;
+	prec_t R = inner->terms[3]/2;
+	prec_t D = pow(Q,3) + pow(R,2);
+	prec_c_t S = ccbrt(R+sqrt(D));
+	prec_c_t T = ccbrt(R-sqrt(D));
+	prec_t coeff = sqrt(3)/2;
+	struct Polynomial_t * ret = poly_init_bare(3);
+	ret->terms[0] = S+T;
+	ret->terms[1] = (S+T)/-2. + I*coeff*csqrt(S-T);
+	ret->terms[2] = (S+T)/-2. - I*coeff*csqrt(S-T);
+	if (inner_free) poly_free(inner);
+	return ret;
 }
