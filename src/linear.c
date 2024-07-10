@@ -1,5 +1,3 @@
-#include <stdlib.h>
-#include <math.h>
 #include "../include/linear.h"
 
 void mat_free(float ** A, int m) {
@@ -20,9 +18,10 @@ void ** mat_init(int m, int n,size_t size) {
 	}
 	return inner;
 }
+
 void rref(float ** mat, int m, int n) {
 	double_sort(mat, m, n);
-	int pivotCoeff, otherCoeff;
+	float pivotCoeff, otherCoeff;
 	for (int col = 0; col < m; ++col) {
 		for (int row = 0; row < m; ++row) {
 			if (row != col && mat[row][col] != 0) {
@@ -105,7 +104,7 @@ void double_sort(float ** mat, int m, int n) {
 		mat[i] = sortedMatrix[i];
 	}
 
-	mat_free(sortedMatrix,m);
+	//free(sortedMatrix);
 	free(maxColElemIndex);
 	free(flagArray);
 }
@@ -118,4 +117,23 @@ float * mat_mul_vec(float **mat, float * v, int m, int n) {
 		}
 	}
 	return res;
+}
+
+float gcd (float a, float b) {
+	if(a == 0)
+	{
+		return b;
+	}
+	else if(b == 0)
+	{
+		return a;
+	}
+	else
+	{
+		return gcd(b,fmod(a,b));
+	}
+}
+
+float lcm (float a, float b) {
+	return ((a*b)/gcd(a,b));
 }

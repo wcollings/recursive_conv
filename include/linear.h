@@ -2,6 +2,8 @@
 #define __LINEAR_H__
 
 #include <stdlib.h>
+#include <math.h>
+#include <stdlib.h>
 #include "central.h"
 
 void mat_free(float ** A, int m);
