@@ -105,18 +105,7 @@ void double_sort(float ** mat, int m, int n) {
 		mat[i] = sortedMatrix[i];
 	}
 
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 5; j++)
-		{
-			printf("%d ",mat[i][j]);
-		}
-		printf("\n");
-		
-	}
-	printf("\n");
-	//mat_free(sortedMatrix,m); //NOLINT
-	//free(sortedMatrix);
+	mat_free(sortedMatrix,m);
 	free(maxColElemIndex);
 	free(flagArray);
 }
