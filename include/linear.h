@@ -2,10 +2,12 @@
 #define __LINEAR_H__
 
 #include <stdlib.h>
+#include <math.h>
+#include <stdio.h>
 #include "central.h"
 
-void mat_free(void ** A, int m);
-void ** mat_init(int m, int n,size_t size);
+void mat_free(prec_t ** A, int m);
+prec_t ** mat_init(int m, int n,size_t size);
 void rref(prec_t ** mat, int m, int n);
 
 /*
