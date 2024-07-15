@@ -1,9 +1,9 @@
 #include "../include/linear.h"
 
-void mat_free(float ** A, int m) {
-	if(A == 0)
-		{
+void mat_free(prec_t ** A, int m) {
+	if(A == 0) {
 			printf("uhhh smth broke");
+			return;
 		}
 	for (int i=0; i < m; ++i ) {
 		free(A[i]);
@@ -11,21 +11,21 @@ void mat_free(float ** A, int m) {
 	free(A);
 }
 
-void ** mat_init(int m, int n,size_t size) {
-	void ** inner = malloc(sizeof(void*)*m);
+prec_t ** mat_init(int m, int n,size_t size) {
+	prec_t ** inner = malloc(sizeof(void*)*m);
 	for (int i=0; i < m; ++i) {
 		inner[i] = malloc(size*n);
 	}
 	return inner;
 }
 
-void double_sort(float ** mat, int m, int n);
-float GreatestCommonDivisor (float a, float b);
-float LowestCommonMultiple (float a, float b);
+void double_sort(prec_t ** mat, int m, int n);
+prec_t GreatestCommonDivisor (prec_t a, prec_t b);
+prec_t LowestCommonMultiple (prec_t a, prec_t b);
 
-void rref(float ** mat, int m, int n) {
+void rref(prec_t ** mat, int m, int n) {
 	double_sort(mat, m, n);
-	float pivotCoeff, otherCoeff, lcm;
+	prec_t pivotCoeff, otherCoeff, lcm;
 	for (int col = 0; col < m; ++col) {
 		for (int row = 0; row < m; ++row) {
 			if (row != col && mat[row][col] != 0) {
@@ -42,14 +42,11 @@ void rref(float ** mat, int m, int n) {
 		mat[row][n - 1] = mat[row][n - 1] / mat[row][row];
 		mat[row][row] = 1;
 	}
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 5; j++)
-		{
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 5; j++) {
 			printf("%f ",mat[i][j]);
 		}
 		printf("\n");
-		
 	}
 	printf("\n");
 }
@@ -72,26 +69,23 @@ void rref(float ** mat, int m, int n) {
  * `N`: the number of columns in the matri
  *
 */
-void double_sort(float ** mat, int m, int n) {
+void double_sort(prec_t ** mat, int m, int n) {
 
 	// I figured it would be easiest to do this one column at a time, so `temp` was supposed to be
 	// the column vector we're currently processing
 	int * maxColElemIndex = malloc(sizeof(int)*m);						// index = col num; value at index = index of row with highest value of that col
-	float maxColElem;							// keep track of largest elem in current column
-	float temp;
+	prec_t maxColElem;							// keep track of largest elem in current column
+	prec_t temp;
 	int * flagArray = calloc(m, sizeof(int));	// used to rearrange matrix rows by changing pointers
 	for (int col = 0; col < n - 1; ++col) {
 		maxColElem = fabs(mat[0][col]);
 		maxColElemIndex[col] = 0;
-		for (int row = 0; row < m; ++row)
-		{	
-			if(flagArray[row]!=0)
-			{
+		for (int row = 0; row < m; ++row) {	
+			if(flagArray[row]!=0) {
 				continue;
 			}
 			temp = mat[row][col];
-			if (fabs(temp) >= fabs(maxColElem))
-			{
+			if (fabs(temp) >= fabs(maxColElem)) {
 				flagArray[maxColElemIndex[col]] = 0;
 				maxColElem = fabs(mat[row][col]);			// store highest value in column, i.e pivot variable
 				maxColElemIndex[col] = row;						// store the row index of the max element, so we can rearrange the matrix accordingly
@@ -100,7 +94,7 @@ void double_sort(float ** mat, int m, int n) {
 		}
 	}
 	
-	float ** sortedMatrix = mat_init(m,n,sizeof(float)); //NOLINT
+	prec_t ** sortedMatrix = mat_init(m,n,sizeof(prec_t)); 
 	for (int i = 0; i < m; ++i) {
 		sortedMatrix[i] = mat[maxColElemIndex[i]];
 	}
@@ -114,8 +108,8 @@ void double_sort(float ** mat, int m, int n) {
 	free(flagArray);
 }
 
-float * mat_mul_vec(float **mat, float * v, int m, int n) {
-	float * res = calloc(m,sizeof(prec_t));
+prec_t * mat_mul_vec(prec_t **mat, prec_t * v, int m, int n) {
+	prec_t * res = calloc(m,sizeof(prec_t));
 	for (int i=0; i < m; ++i) {
 		for (int j=0; j < n; ++j) {
 			res[i]+=mat[i][j]*v[j];
@@ -124,21 +118,25 @@ float * mat_mul_vec(float **mat, float * v, int m, int n) {
 	return res;
 }
 
-float GreatestCommonDivisor (float a, float b) {
-	if(a == 0)
-	{
+prec_t GreatestCommonDivisor (prec_t a, prec_t b) {
+	/* How do you feel about this code snippet?
+	 * It's logically exactly the same, but I can't decide if it's easier or harder to read...
+	 *
+	return (a ?
+					( b ?
+						GreatestCommonDivisor(b, fmod(a,b))
+					: a)
+				: b );
+	*/
+	if(a == 0) {
 		return b;
-	}
-	else if(b == 0)
-	{
+	} else if(b == 0) {
 		return a;
-	}
-	else
-	{
+	} else {
 		return GreatestCommonDivisor(b,fmod(a,b));
 	}
 }
 
-float LowestCommonMultiple (float a, float b) {
+prec_t LowestCommonMultiple (prec_t a, prec_t b) {
 	return ((a*b)/GreatestCommonDivisor(a,b));
 }
