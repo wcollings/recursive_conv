@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <stdlib.h>
+#include <stdio.h>
 #include "central.h"
 
 void mat_free(float ** A, int m);

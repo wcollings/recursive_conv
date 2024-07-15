@@ -19,14 +19,19 @@ void ** mat_init(int m, int n,size_t size) {
 	return inner;
 }
 
+void double_sort(float ** mat, int m, int n);
+float GreatestCommonDivisor (float a, float b);
+float LowestCommonMultiple (float a, float b);
+
 void rref(float ** mat, int m, int n) {
 	double_sort(mat, m, n);
-	float pivotCoeff, otherCoeff;
+	float pivotCoeff, otherCoeff, lcm;
 	for (int col = 0; col < m; ++col) {
 		for (int row = 0; row < m; ++row) {
 			if (row != col && mat[row][col] != 0) {
-				pivotCoeff = mat[col][col];
-				otherCoeff = mat[row][col];
+				lcm = LowestCommonMultiple(mat[col][col],mat[row][col]);
+				pivotCoeff = lcm/mat[row][col];
+				otherCoeff = lcm/mat[col][col];
 				for (int k = 0; k < n; ++k) {
 					mat[row][k] = (pivotCoeff * mat[row][k]) - (otherCoeff * mat[col][k]);
 				}
@@ -119,7 +124,7 @@ float * mat_mul_vec(float **mat, float * v, int m, int n) {
 	return res;
 }
 
-float gcd (float a, float b) {
+float GreatestCommonDivisor (float a, float b) {
 	if(a == 0)
 	{
 		return b;
@@ -130,10 +135,10 @@ float gcd (float a, float b) {
 	}
 	else
 	{
-		return gcd(b,fmod(a,b));
+		return GreatestCommonDivisor(b,fmod(a,b));
 	}
 }
 
-float lcm (float a, float b) {
-	return ((a*b)/gcd(a,b));
+float LowestCommonMultiple (float a, float b) {
+	return ((a*b)/GreatestCommonDivisor(a,b));
 }
