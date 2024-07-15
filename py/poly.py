@@ -11,6 +11,10 @@ def sign(a):
 def mul_all(l:list[float],c:float):
 	return list(map(lambda x:x*c,l))
 class Poly:
+	"""
+	Holds a polynomial. All terms are assumed to be in descending order, 
+	i.e. the coefficient of the highest term first, then the second highest, etc.
+	"""
 	coeff:list[float]
 	print_as_tuple:bool
 	print_as_you_go:bool
@@ -53,6 +57,7 @@ class Poly:
 				term += temp
 			dst[i] = term
 		self.coeff=dst
+		return self
 	def __mul__(self,rhs:'Poly|float'):
 		if isinstance(rhs,float):
 			return Poly(mul_all(self.coeff,rhs),self.print_as_tuple)
@@ -79,6 +84,8 @@ class Poly:
 		# if self.print_as_you_go:
 		# 	print(result)
 		return Poly(result,self.print_as_tuple,self.print_as_you_go)
+	def __sub__(self,rhs):
+		return self + rhs*(-1.0)
 	def __radd__(self,rhs:'Poly'):
 		better=max(self.coeff,rhs.coeff,key=len)
 		left=(better==self.coeff)
@@ -124,7 +131,6 @@ class Poly:
 	def __call__(self,x:float) -> float:
 		res=self.coeff[0]
 		for v in self.coeff[1:]:
-			# print(f"{v}x^{i}={v*(x**i)}")
 			res=v+(x*res)
 		return res
 	def __pow__(self,p):
@@ -187,6 +193,14 @@ def cubic_find_roots_new(p:Poly):
 	# z2=-z.real - sqrt(3)*z.imag
 	return Poly([z0,z1,z2],roots=True)
 	
+def synth_div(p:Poly, z:float):
+	res= Poly([])
+	res.coeff.append(1)
+	last = 1
+	for c in p.coeff[1:]:
+		res.coeff.append(last*z+c)
+		last = res.coeff[-1]
+	return res
 
 	
 def cubic_find_roots(p:Poly):
