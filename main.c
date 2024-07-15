@@ -2,7 +2,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "include/pade.h"
-#include "include/ddiff.h"
+#include "include/deriv.h"
 #include "include/poly.h"
 #include "include/sara.h"
 
@@ -23,25 +23,19 @@ prec_t L(prec_t f) {
 int main() {
 	float center=2e5;
 	int M=3, N=4, x_step=10;
-	prec_t * base_vals = malloc(sizeof(prec_t)*(M+N+1));
-	prec_t * xs = malloc(sizeof(prec_t)*(M+N+1));
-	for (int i=0; i < M+N+1; ++i) {
-		xs[i] = center*(i+x_step);
-		base_vals[i]=L(center+(i*x_step));
-	}
-	prec_t * derivs = divided_difference(xs,base_vals,M+N+1);
-	scale_to_taylor(derivs, N+M+1);
+	prec_t * derivs = take_derivatives(&L,center,1./10);
+	scale_to_taylor(derivs, 8);
 	struct Polynomial_t * taylor = poly_init_bare(N+M+1);
 	flip_arr(taylor->terms, N+M+1);
-	poly_recenter(taylor, center);
+	/* poly_recenter(taylor, center); */
 	struct Pade_t * approx = pade_create_fit(taylor,M);
 	struct Solver_t * solv = solver_init(2, approx);
 	solv->cb=&print_results;
-	float time=0;
-	printf("t,v\n");
-	for (int i=0; i < 40; ++i) {
-		step(solv,1,i);
-	}
+	/* float time=0; */
+	/* printf("t,v\n"); */
+	/* for (int i=0; i < 40; ++i) { */
+	/* 	step(solv,1,i); */
+	/* } */
 	return 0;
 	/* prec_t res=0; */
 	/* prec_t inpts[2]={1,2}; */
