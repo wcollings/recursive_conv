@@ -77,13 +77,15 @@ void double_sort(prec_t ** mat, int m, int n) {
 	prec_t maxColElem;							// keep track of largest elem in current column
 	prec_t temp;
 	int * flagArray = calloc(m, sizeof(int));	// used to rearrange matrix rows by changing pointers
+	int nextFreeRow = 0;
 	for (int col = 0; col < n - 1; ++col) {
-		maxColElem = fabs(mat[0][col]);
-		maxColElemIndex[col] = 0;
-		for (int row = 0; row < m; ++row) {	
-			if(flagArray[row]!=0) {
-				continue;
-			}
+		while(flagArray[nextFreeRow] == 1)
+		{
+			nextFreeRow++;
+		}
+		maxColElem = fabs(mat[nextFreeRow][col]);
+		maxColElemIndex[col] = nextFreeRow;
+		for (int row = nextFreeRow; row < m; ++row) {	
 			temp = mat[row][col];
 			if (fabs(temp) >= fabs(maxColElem)) {
 				flagArray[maxColElemIndex[col]] = 0;
@@ -92,6 +94,7 @@ void double_sort(prec_t ** mat, int m, int n) {
 				flagArray[row] = 1;
 			}
 		}
+		nextFreeRow = 0;
 	}
 	
 	prec_t ** sortedMatrix = mat_init(m,n,sizeof(prec_t)); 
