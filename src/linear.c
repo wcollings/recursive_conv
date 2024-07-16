@@ -86,6 +86,9 @@ void double_sort(prec_t ** mat, int m, int n) {
 		maxColElem = fabs(mat[nextFreeRow][col]);
 		maxColElemIndex[col] = nextFreeRow;
 		for (int row = nextFreeRow; row < m; ++row) {	
+			if(flagArray[row]!=0) {
+				continue;
+			}
 			temp = mat[row][col];
 			if (fabs(temp) >= fabs(maxColElem)) {
 				flagArray[maxColElemIndex[col]] = 0;
