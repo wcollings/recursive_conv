@@ -1,5 +1,6 @@
 from typing import Sequence
 from ddiff import ddiff
+from poly import Poly,synth_div
 from numpy import linspace, ones,zeros,chararray,array,logspace,ndarray
 from numpy.linalg import solve
 from math import log10,ceil,exp,atan
@@ -69,7 +70,6 @@ def print_pade(aa:Sequence[float],bb:Sequence[float], base:float=0):
 
 def eval_pade(aa,bb, x):
 	num=unroll(aa,x)
-	# denom=straight_eval(bb,x)
 	denom=unroll(bb,x)
 	return num/denom
 
@@ -169,6 +169,16 @@ def get_err(aa,bb,plot=False):
 		plt.ylim((1.78e-9,3e-9))
 		plt.show()
 	return sum(err)
+
+def separate(num:Poly,denom:Poly):
+	mat = zeros((len(denom),len(denom)+1))
+	roots = denom.get_roots()
+	for i in range(len(roots)):
+		temp = synth_div(denom,roots.coeff[i])
+		mat[:,i] = temp.coeff
+	end = len(denom)
+
+
 
 
 def hf(n,N):

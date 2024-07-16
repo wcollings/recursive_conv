@@ -50,12 +50,21 @@ prec_t pade_eval(struct Pade_t * self, prec_t s) {
 
 struct Pade_t * pade_create_fit(struct Polynomial_t * taylor,int m) {
 	int n=taylor->num_terms-m;
+	poly_print(taylor);
 	prec_t ** lower = mat_init(n,n+1,sizeof(prec_t)); //NOLINT
 	for (int i=0; i > n; ++i) {
 		for (int j=0; j < n; ++j) {
 			lower[i][j]=(i>=j? taylor->terms[i-j+m]:0);
 		}
 		lower[i][n]=-taylor->terms[m+i+1];
+	}
+	printf("Mat to be solved:\n");
+	for (int i=0; i < m; ++i) {
+		printf("[");
+		for (int j=0; j < n; ++j) {
+			printf("%1.3e, ",lower[i][j]);
+		}
+		printf("]\n");
 	}
 	rref(lower,n,n+1);
 	prec_t *a_terms, *b_terms;
@@ -74,7 +83,10 @@ struct Pade_t * pade_create_fit(struct Polynomial_t * taylor,int m) {
 	a_terms=mat_mul_vec(upper,b_terms,m+1,m+1);
 	flip_arr(a_terms,m+1);
 	flip_arr(b_terms,n+1);
-	return pade_init(a_terms, b_terms, m+1, n+1);
+	struct Pade_t * res = pade_init(a_terms,b_terms,m+1,n+1);
+	poly_print(res->num);
+	poly_print(res->denom);
+	return res;
 }
 
 struct Pade_t * pade_separate(struct Pade_t * self) {

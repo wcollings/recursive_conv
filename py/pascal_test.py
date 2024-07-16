@@ -37,10 +37,7 @@ def pascal(row):
 	for i in range(1,row+1):
 		for j in range(1,floor((i-1)/2)+2):
 			tri[sumup(i)+2*j-1]*= -1
-
-
-
-	print(tri)
+	# print(tri)
 	return tri
 def recenter(l,c):
 	N = len(l)
@@ -54,6 +51,6 @@ def recenter(l,c):
 			temp=tri[loc]*bn*pow(c,i-j)
 			term += temp
 		dst[i] = term
-	print(dst)
 
-recenter([1,2,5],3)
+if __name__=="__main__":
+	recenter([1,2,5],3)

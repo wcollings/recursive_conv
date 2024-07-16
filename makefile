@@ -1,11 +1,11 @@
 IDIR=include
 cc=gcc
-CFLAGS=-I$(IDIR) -fpermissive -fPIC -g
+CFLAGS=-I$(IDIR) -fPIC -g
 LIBS=-lm
-_DEPS=pade.h sara.h poly.h linear.h ddiff.h
+_DEPS=pade.h sara.h poly.h linear.h deriv.h
 DEPS=$(patsubst %,$(IDIR)/%,$(_DEPS))
 ODIR=obj
-_OBJ=pade.o sara.o poly.o linear.o ddiff.o
+_OBJ=pade.o sara.o poly.o linear.o deriv.o
 OBJ=$(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: src/%.c $(DEPS)
