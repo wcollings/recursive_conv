@@ -5,6 +5,7 @@
 #include "include/deriv.h"
 #include "include/poly.h"
 #include "include/sara.h"
+#include "include/csv.h"
 
 void print_results(struct Solver_t * SOLV) {
 	prec_t output=SOLV->yy[0][0] + SOLV->yy[1][0];
@@ -17,26 +18,29 @@ prec_t L(prec_t f) {
 			c=800e-9,
 			f0=2e4;
 	prec_t res=(0.6366*a)*atan(-c*(f-f0))+b;
-	return res;
+	prec_t offset=(0.6366*a)*atan(-c*(1e8-f0))+b;
+	return res-offset;
 }
 
 int main() {
 	float center=2e5;
-	int M=3, N=4, x_step=10;
-	prec_t * derivs = take_derivatives(&L,center,1./10);
-	scale_to_taylor(derivs, 8);
+	int M=1, N=2, x_step=10;
+	/* struct Polynomial_t * taylor = read_poly("L_deriv.csv"); */
+	prec_t * derivs = take_derivatives(&L,center,30);
 	struct Polynomial_t * taylor = poly_init_bare(N+M+1);
-	flip_arr(taylor->terms, N+M+1);
-	/* poly_recenter(taylor, center); */
-	struct Pade_t * approx = pade_create_fit(taylor,M);
-	struct Solver_t * solv = solver_init(2, approx);
-	solv->cb=&print_results;
+	flip_arr(derivs, N+M+1);
+	taylor->terms = derivs;
+	struct Polynomial_t * out=poly_recenter(taylor,2e5);
+	struct Pade_t * approx = pade_create_fit(out,M);
+	pade_separate(approx);
+	/* struct Solver_t * solv = solver_init(2, approx); */
+	/* solv->cb=&print_results; */
+	return 0;
 	/* float time=0; */
 	/* printf("t,v\n"); */
 	/* for (int i=0; i < 40; ++i) { */
 	/* 	step(solv,1,i); */
 	/* } */
-	return 0;
 	/* prec_t res=0; */
 	/* prec_t inpts[2]={1,2}; */
 	/* printf("TIME\tV\n"); */

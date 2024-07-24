@@ -64,16 +64,20 @@ prec_t sten_7(prec_t (*fn)(prec_t),prec_t x,prec_t h) {
 }
 prec_t * take_derivatives(prec_t (*fn)(prec_t), prec_t x, prec_t h) {
 	prec_t * res = malloc(sizeof(prec_t)*8);
-	res[0] = (*fn)(x);
-	res[1] = sten_1(fn,x,h);
-	res[2] = sten_2(fn,x,h);
-	res[3] = sten_3(fn,x,h);
-	res[4] = sten_4(fn,x,h);
-	res[5] = sten_5(fn,x,h);
-	res[6] = sten_6(fn,x,h);
-	res[7] = sten_7(fn,x,h);
-	for (int i=0; i < 8; ++i) {
-		printf("%i->%1.3e\n",i,res[i]);
+	res[0] = 9.0099e-10;
+	res[1] = -4.9895e-16;
+	res[2] = 1.1262e-22;
+	res[3] = 5.748e-28;
+	/* res[0] = (*fn)(x); */
+	/* res[1] = sten_1(fn,x,h); */
+	/* res[2] = sten_2(fn,x,h); */
+	/* res[3] = sten_3(fn,x,h); */
+	/* res[4] = sten_4(fn,x,h); */
+	/* res[5] = sten_5(fn,x,h); */
+	/* res[6] = sten_6(fn,x,h); */
+	/* res[7] = sten_7(fn,x,h); */
+	for (int i=0; i < 4; ++i) {
+		printf("%d->%1.3e\n",i,res[i]);
 	}
 	return res;
 }

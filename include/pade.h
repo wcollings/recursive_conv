@@ -11,23 +11,10 @@
 #include "central.h"
 #include "poly.h"
 #include "linear.h"
+#include "csv.h"
 #include <stdlib.h>
 #include <string.h> // just need this for memcpy
 #include <math.h>
-
-/*
- * Selector for if the values stored in the Pade_t struct are of the form:
- *
- * a0 + a1x + a2x^2 + ...
- * ---------------------
- * b0 + b1x + b2x^2 + ...
- * 
- * or 
- * (A)/(x-r0) + (B)/(x-r1) + ...
- *
- * `roots` means the second, `poly` means the first
- */
-enum values_type_sel { Roots, Poly};
 
 /*
  * Holds the terms for a divided fraction representation. Either in the form:
@@ -42,6 +29,7 @@ enum values_type_sel { Roots, Poly};
  *
  */
 struct Pade_t {
+	prec_t offset;
 	enum values_type_sel vals;
 	struct Polynomial_t * num;
 	struct Polynomial_t * denom;
@@ -51,6 +39,9 @@ struct Pade_t {
  * Initialize a Pade Approximant using two arrays
 */
 struct Pade_t * pade_init(prec_t *A, prec_t *B,int M, int N);
+struct Pade_t * pade_init_with_offset(prec_t *A, prec_t *B,int M, int N,prec_t offset);
+
+void pade_print(struct Pade_t * self);
 
 /*
  * Initialize a Pade Approximant using two polynomials

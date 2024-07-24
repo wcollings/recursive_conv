@@ -1,10 +1,15 @@
 #include "../include/poly.h"
 #include <math.h>
 
-#define SUMUP(x) (int)(x*(x+1))/2
+//#define SUMUP(x) (int)((x*(x+1.))/2)
+int SUMUP(int x) {
+	int num = x*(x+1);
+	return num/2;
+}
 
 struct Polynomial_t * poly_init_bare(int num_terms) {
 	struct Polynomial_t * out = malloc(sizeof(struct Polynomial_t));
+	out->tp=Vals;
 	out->num_terms=num_terms;
 	out->terms = calloc(num_terms,sizeof(prec_t));
 	return out;
@@ -53,30 +58,64 @@ prec_t poly_eval(struct Polynomial_t * a, prec_t val) {
 	return res;
 }
 void poly_print(struct Polynomial_t * p) {
-	printf("%-ex^%d",p->terms[0],p->num_terms);
-	for (int i=1; i < p->num_terms; ++i) {
-		printf("%+ex^%d",p->terms[i],p->num_terms-i);
+	if (p->tp==Vals) {
+		printf("%-"PRNT_SPEC"x^%d",p->terms[0],p->num_terms);
+		for (int i=1; i < p->num_terms; ++i) {
+			#if USE_DOUBLE
+			printf("%+lex^%d",p->terms[i],p->num_terms-i);
+			#else
+			printf("%+ex^%d",p->terms[i],p->num_terms-i-1);
+			#endif
+		}
+	} else {
+		for (int i=0; i < p->num_terms; ++i) {
+			printf("(x%-"PRNT_SPEC")",p->terms[i]);
+		}
 	}
+	printf("\n");
 }
 
 struct Polynomial_t * poly_sd_1term(struct Polynomial_t * num, prec_t z) {
 	struct Polynomial_t * res=malloc(sizeof(struct Polynomial_t));
 	res->num_terms=num->num_terms-1;
 	res->terms=malloc(sizeof(prec_t)*res->num_terms);
-	res->terms[0]=1;
-	for (int i=1; i < res->num_terms-1; ++i) {
+	res->terms[0]=num->terms[0];
+	int i;
+	for (i=1; i < res->num_terms-1; ++i) {
 		res->terms[i]=res->terms[i-1]*z+num->terms[i];
 	}
+	/* i++; */
+	/* prec_t rem = res->terms[i-1]*z+num->terms[i]; */
+	/* if (rem !=0 ) { */
+	/* 	printf("WARNING: ");//is not cleanly divisible by %SPEC!\n"); */
+	/* 	poly_print(num); */
+	/* 	printf(" is not cleanly divisible by %" PRNT_SPEC "\n",z); */
+	/* 	printf("(rem = %"PRNT_SPEC")\n",rem); */
+	/* } */
+	poly_depress(res);
 	return res;
 }
 
 struct Polynomial_t * poly_get_roots(struct Polynomial_t * p) {
 	struct Polynomial_t * roots = malloc(sizeof(struct Polynomial_t));
-	roots->num_terms=p->num_terms;
+	roots->num_terms=p->num_terms-1;
 	roots->terms=malloc(sizeof(prec_t)*roots->num_terms);
-	
-	// find the roots
-
+	switch(roots->num_terms) {
+		case 1:
+			roots->terms[0] = p->terms[1]/p->terms[0];
+			break;
+		case 2:
+			free(roots);
+			roots=roots_binomial(p);
+			break;
+		case 3:
+			free(roots);
+			roots = roots_trinomial(p);
+			break;
+		default:
+			free(roots);
+			roots=NULL;
+	}
 	return roots;
 }
 void poly_free(struct Polynomial_t * p) {
@@ -106,11 +145,12 @@ void flip_arr(prec_t * arr, int n) {
  *
 */
 int * pascal(int row, int invert) {
-	int num_ele = SUMUP(row+1)-1;
+	int num_ele = SUMUP(row+1);
 	int * tri = malloc(sizeof(int)*num_ele);
 	int col=0;
 	for (int i=0; i < num_ele; ++i) {
-		int start=SUMUP(col), end = SUMUP(col+1)-1;
+		int start=SUMUP(col);
+		int end = SUMUP(col+1)-1;
 		if (i == start || i == end) {
 			tri[i]=1;
 			if (i==end) col++;
@@ -120,9 +160,12 @@ int * pascal(int row, int invert) {
 			int idx=SUMUP(col-1)+offset-1;
 			tri[i]=tri[idx]+tri[idx+1];
 		}
-		int offset=i-SUMUP(col);
-		if (invert==1 && offset%2==0)
-			tri[i]*=-1;
+		/* int offset=i-SUMUP(col); */
+	}
+	for (int i = 1; i < row+1; ++i) {
+		for (int j=1; j < floor((i-1)/2+2); ++j) {
+			tri[SUMUP(i)+2*j-1]*=-1;
+		}
 	}
 	return tri;
 }
@@ -135,9 +178,9 @@ struct Polynomial_t * poly_recenter(struct Polynomial_t * src, prec_t c) {
 		prec_t term = 0;
 		for (int j = 0; j<=i; ++j) {
 			term += tri[SUMUP(N-j-1)+(i-j)]*src->terms[j]*pow(c,i-j); //NOLINT
+			/* printf("%d\n",tri[SUMUP(N-j-1)+(i-j)]); */
 		}
 		dest->terms[i] = term;
-		term=0;
 	}
 	return dest;
 }
@@ -165,21 +208,18 @@ struct Polynomial_t * roots_quartic(struct Polynomial_t * self) {
 struct Polynomial_t * roots_binomial(struct Polynomial_t * self) {
 	prec_t b,c;
 	struct Polynomial_t * roots = poly_init_bare(2);
-	if (self->terms[0] != 1) {
-		poly_depress(self);
-	}
-	b=self->terms[1];
+	roots->tp=Roots;
+	poly_depress(self);
+	b=self->terms[1]/2;
 	c=self->terms[2];
 	if (b > 0) {
 		if (pow(b,2) > c) {
-			roots->terms[0] = -b-sqrt(pow(b,2)-c);
+			roots->terms[0] = -(b+sqrt(pow(b,2)-c));
 			roots->terms[1] = c/roots->terms[0];
 		}
-		// if the roots are complex
-		// TODO: handle this more properly, once I decide what that means
 		else {
-			roots->terms[0] = INFINITY;
-			roots->terms[1] = INFINITY;
+			roots->terms[0] = CMPLX(-b,sqrt(c-pow(b,2)));
+			roots->terms[1] = CMPLX(-b,-I*sqrt(c-pow(b,2)));
 		}
 	}
 	else {
@@ -188,12 +228,12 @@ struct Polynomial_t * roots_binomial(struct Polynomial_t * self) {
 			roots->terms[1] = c/roots->terms[0];
 
 		}
-		// if the roots are complex
 		else {
-			roots->terms[0] = INFINITY;
-			roots->terms[1] = INFINITY;
+			roots->terms[0] = CMPLX(-b,sqrt(c-pow(b,2)));
+			roots->terms[1] = CMPLX(-b,-I*sqrt(c-pow(b,2)));
 		}
 	}
+	poly_print(roots);
 	return roots;
 }
 
@@ -228,6 +268,7 @@ struct Polynomial_t * roots_trinomial(struct Polynomial_t * self) {
 	prec_c_t T = ccbrt(R-sqrt(D));
 	prec_t coeff = sqrt(3)/2;
 	struct Polynomial_t * ret = poly_init_bare(3);
+	ret->tp=Roots;
 	ret->terms[0] = S+T;
 	ret->terms[1] = (S+T)/-2. + I*coeff*csqrt(S-T);
 	ret->terms[2] = (S+T)/-2. - I*coeff*csqrt(S-T);
