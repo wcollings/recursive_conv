@@ -9,6 +9,7 @@
 void mat_free(prec_t ** A, int m);
 prec_t ** mat_init(int m, int n,size_t size);
 void rref(prec_t ** mat, int m, int n);
+void mat_print(prec_t ** mat,int m, int n);
 
 /*
  * multiply a matrix by a vector, with the vector on the right

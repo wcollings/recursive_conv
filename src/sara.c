@@ -5,6 +5,7 @@
 */
 #include "../include/sara.h"
 #include "../include/pade.h"
+#include "../include/interpolate.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -146,6 +147,26 @@ void step(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
 	if (SOLV->cb != NULL)
 		(*SOLV->cb)(SOLV);
 	SOLV->curr_t=curr_t;
+}
+
+void step_resistance(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
+	shift(SOLV->xx,SOLV->order);
+	SOLV->xx[0]=inpt;
+	shift(SOLV->tt,SOLV->order);
+	shift(SOLV->yy[0],SOLV->order);
+	SOLV->tt[0]=curr_t-SOLV->curr_t;
+	prec_t b = 2.04e-9;
+	prec_t c = -0.2739;
+	prec_t d = -0.03652;
+	prec_t c0 = 0.2/exp(b*c);
+	prec_t interp_t = curr_t - b;
+	prec_t out1 = c0*interpolate(SOLV->tt[1],
+			SOLV->xx[1],
+			SOLV->tt[0],
+			SOLV->xx[0],
+			interp_t);
+	prec_t out2 = d*SOLV->xx[0];
+	SOLV->yy[0][0] = out1+out2;
 }
 struct Solver_t * gSOLV=NULL;
 prec_t result(int argc, prec_t *argv) {

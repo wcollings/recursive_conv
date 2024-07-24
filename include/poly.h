@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <math.h>
 
+enum values_type_sel { Roots, Vals};
+
 /*
  * Holds a polynomial, which is represented internally as simply an array of coefficients.
  *
@@ -21,6 +23,7 @@
  */
 struct Polynomial_t {
 	int num_terms;
+	enum values_type_sel tp;
 	prec_t * terms; /* The terms are in highest-order to lowest-order*/
 };
 
@@ -88,4 +91,7 @@ void poly_depress(struct Polynomial_t * self);
  * Convenience function to reverse an array
 */
 void flip_arr(prec_t * arr, int n);
+struct Polynomial_t * roots_binomial(struct Polynomial_t * self);
+struct Polynomial_t * roots_trinomial(struct Polynomial_t * self);
+
 #endif

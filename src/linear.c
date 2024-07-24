@@ -11,6 +11,18 @@ void mat_free(prec_t ** A, int m) {
 	free(A);
 }
 
+void mat_print(prec_t ** mat,int m, int n) {
+
+	for (int i=0; i < m; ++i) {
+		printf("[");
+		for (int j=0; j < n; ++j) {
+			printf("%+1.3e, ",mat[i][j]);
+		}
+		printf("]\n");
+	}
+	printf("\n");
+}
+
 prec_t ** mat_init(int m, int n,size_t size) {
 	prec_t ** inner = malloc(sizeof(void*)*m);
 	for (int i=0; i < m; ++i) {
@@ -29,12 +41,13 @@ void rref(prec_t ** mat, int m, int n) {
 	for (int col = 0; col < m; ++col) {
 		for (int row = 0; row < m; ++row) {
 			if (row != col && mat[row][col] != 0) {
-				lcm = LowestCommonMultiple(mat[col][col],mat[row][col]);
-				pivotCoeff = lcm/mat[row][col];
-				otherCoeff = lcm/mat[col][col];
+				//lcm = LowestCommonMultiple(mat[col][col],mat[row][col]);
+				pivotCoeff = mat[col][col];
+				otherCoeff = mat[row][col];
 				for (int k = 0; k < n; ++k) {
 					mat[row][k] = (pivotCoeff * mat[row][k]) - (otherCoeff * mat[col][k]);
 				}
+				/* mat_print(mat,m,n); */
 			}
 		}
 	}
@@ -42,13 +55,9 @@ void rref(prec_t ** mat, int m, int n) {
 		mat[row][n - 1] = mat[row][n - 1] / mat[row][row];
 		mat[row][row] = 1;
 	}
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 5; j++) {
-			printf("%f ",mat[i][j]);
-		}
-		printf("\n");
-	}
-	printf("\n");
+#if DEBUG_PRINTS
+	mat_print(mat,m,n);
+#endif
 }
 
 /*
@@ -76,11 +85,17 @@ void double_sort(prec_t ** mat, int m, int n) {
 	int * maxColElemIndex = malloc(sizeof(int)*m);						// index = col num; value at index = index of row with highest value of that col
 	prec_t maxColElem;							// keep track of largest elem in current column
 	prec_t temp;
+	mat_print(mat,m,n);
 	int * flagArray = calloc(m, sizeof(int));	// used to rearrange matrix rows by changing pointers
+	int nextFreeRow = 0;
 	for (int col = 0; col < n - 1; ++col) {
-		maxColElem = fabs(mat[0][col]);
-		maxColElemIndex[col] = 0;
-		for (int row = 0; row < m; ++row) {	
+		while(flagArray[nextFreeRow] == 1)
+		{
+			nextFreeRow++;
+		}
+		maxColElem = fabs(mat[nextFreeRow][col]);
+		maxColElemIndex[col] = nextFreeRow;
+		for (int row = nextFreeRow; row < m; ++row) {	
 			if(flagArray[row]!=0) {
 				continue;
 			}
@@ -92,12 +107,14 @@ void double_sort(prec_t ** mat, int m, int n) {
 				flagArray[row] = 1;
 			}
 		}
+		nextFreeRow = 0;
 	}
 	
 	prec_t ** sortedMatrix = mat_init(m,n,sizeof(prec_t)); 
 	for (int i = 0; i < m; ++i) {
 		sortedMatrix[i] = mat[maxColElemIndex[i]];
 	}
+	mat_print(sortedMatrix,m,n);
 
 	for (int i = 0; i < m; ++i) {
 		mat[i] = sortedMatrix[i];
@@ -128,6 +145,8 @@ prec_t GreatestCommonDivisor (prec_t a, prec_t b) {
 					: a)
 				: b );
 	*/
+	if (a == NAN || b == NAN)
+		return -1;
 	if(a == 0) {
 		return b;
 	} else if(b == 0) {
