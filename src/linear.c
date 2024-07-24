@@ -29,9 +29,9 @@ void rref(prec_t ** mat, int m, int n) {
 	for (int col = 0; col < m; ++col) {
 		for (int row = 0; row < m; ++row) {
 			if (row != col && mat[row][col] != 0) {
-				lcm = LowestCommonMultiple(mat[col][col],mat[row][col]);
-				pivotCoeff = lcm/mat[row][col];
-				otherCoeff = lcm/mat[col][col];
+				//lcm = LowestCommonMultiple(mat[col][col],mat[row][col]);
+				pivotCoeff = mat[col][col];
+				otherCoeff = mat[row][col];
 				for (int k = 0; k < n; ++k) {
 					mat[row][k] = (pivotCoeff * mat[row][k]) - (otherCoeff * mat[col][k]);
 				}
@@ -42,8 +42,8 @@ void rref(prec_t ** mat, int m, int n) {
 		mat[row][n - 1] = mat[row][n - 1] / mat[row][row];
 		mat[row][row] = 1;
 	}
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 5; j++) {
+	for (int i = 0; i < m; i++) {
+		for (int j = 0; j < n; j++) {
 			printf("%f ",mat[i][j]);
 		}
 		printf("\n");
