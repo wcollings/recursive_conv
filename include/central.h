@@ -6,7 +6,7 @@
 #define __CENTRAL_H__
 #include <complex.h>
 
-#define prec_t float
+#define prec_t double
 #define prec_c_t prec_t _Complex
 #define DEBUG_PRINTS 0
 
