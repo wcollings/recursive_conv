@@ -29,18 +29,20 @@
  *
  */
 struct Pade_t {
-	prec_t offset;
+	prec_c_t offset;
 	enum values_type_sel vals;
 	struct Polynomial_t * num;
 	struct Polynomial_t * denom;
 };
+void pade_iter(struct Pade_t * self);
 
 /*
  * Initialize a Pade Approximant using two arrays
 */
-struct Pade_t * pade_init(prec_t *A, prec_t *B,int M, int N);
-struct Pade_t * pade_init_with_offset(prec_t *A, prec_t *B,int M, int N,prec_t offset);
+struct Pade_t * pade_init(prec_c_t *A, prec_c_t *B,int M, int N);
+struct Pade_t * pade_init_with_offset(prec_c_t *A, prec_c_t *B,int M, int N,prec_c_t offset);
 
+void pade_free(struct Pade_t * self);
 void pade_print(struct Pade_t * self);
 
 /*
@@ -51,7 +53,7 @@ struct Pade_t * pade_init_poly(struct Polynomial_t * num, struct Polynomial_t * 
 /*
  * Evaluate a Pade Approximant at a certain point
 */
-prec_t pade_eval(struct Pade_t * self, prec_t s);
+prec_c_t pade_eval(struct Pade_t * self, prec_c_t s);
 
 /*
  * Create a Pade approximant given a polynomial that hold the coefficients

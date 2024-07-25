@@ -5,14 +5,13 @@
 #include "include/deriv.h"
 #include "include/poly.h"
 #include "include/sara.h"
-#include "include/csv.h"
 
 void print_results(struct Solver_t * SOLV) {
 	prec_t output=SOLV->yy[0][0] + SOLV->yy[1][0];
 	printf("%f,%f\n",SOLV->curr_t,output);
 }
 
-prec_t L(prec_t f) {
+prec_c_t L(prec_c_t f) {
 	float a=1e-9,
 			b=2.8e-9,
 			c=800e-9,
@@ -25,14 +24,17 @@ prec_t L(prec_t f) {
 int main() {
 	float center=2e5;
 	int M=1, N=2, x_step=10;
-	/* struct Polynomial_t * taylor = read_poly("L_deriv.csv"); */
-	prec_t * derivs = take_derivatives(&L,center,30);
+	prec_c_t * derivs = take_derivatives(&L,center,30);
 	struct Polynomial_t * taylor = poly_init_bare(N+M+1);
+	free(taylor->terms);
 	flip_arr(derivs, N+M+1);
 	taylor->terms = derivs;
 	struct Polynomial_t * out=poly_recenter(taylor,2e5);
 	struct Pade_t * approx = pade_create_fit(out,M);
 	pade_separate(approx);
+	poly_free(taylor);
+	poly_free(out);
+	pade_free(approx);
 	/* struct Solver_t * solv = solver_init(2, approx); */
 	/* solv->cb=&print_results; */
 	return 0;

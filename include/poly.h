@@ -24,10 +24,11 @@ enum values_type_sel { Roots, Vals};
 struct Polynomial_t {
 	int num_terms;
 	enum values_type_sel tp;
-	prec_t * terms; /* The terms are in highest-order to lowest-order*/
+	prec_c_t * terms; /* The terms are in highest-order to lowest-order*/
 };
 
 
+void poly_iter(struct Polynomial_t * self);
 /*
  * Initialize a polynomial structure to hold a given number of elements. The elements need to
  * then be added by you!
@@ -52,7 +53,7 @@ struct Polynomial_t * poly_mul(struct Polynomial_t * a, struct Polynomial_t * b)
 /*
  * Evaluate a polynomial `a` at `val`
 */
-prec_t poly_eval(struct Polynomial_t * a, prec_t val);
+prec_c_t poly_eval(struct Polynomial_t * a, prec_c_t val);
 
 /*
  * Pretty print the polynomial
@@ -65,7 +66,7 @@ void poly_print(struct Polynomial_t * p);
  * The second polynomial (which we're dividing by) is just passed by the a_0 term. Assumes that 
  * a_0 is a root of the first polynomial as well, i.e. there will be no remainder. 
  */
-struct Polynomial_t * poly_sd_1term(struct Polynomial_t * num, prec_t z);
+struct Polynomial_t * poly_sd_1term(struct Polynomial_t * num, prec_c_t z);
 
 /*
  * Use some root finding algorithm to find all the (real) roots of the given polynomial
@@ -80,7 +81,7 @@ struct Polynomial_t * poly_get_roots(struct Polynomial_t * num);
  *
  * `NOTE`: should this just act on the original object, return void?
 */
-struct Polynomial_t * poly_recenter(struct Polynomial_t * src, prec_t c);
+struct Polynomial_t * poly_recenter(struct Polynomial_t * src, prec_c_t c);
 
 /*
  * Turn a polynomial into a depressed polynomial, where the highest coefficient is 1
@@ -90,7 +91,7 @@ void poly_depress(struct Polynomial_t * self);
 /*
  * Convenience function to reverse an array
 */
-void flip_arr(prec_t * arr, int n);
+void flip_arr(prec_c_t * arr, int n);
 struct Polynomial_t * roots_binomial(struct Polynomial_t * self);
 struct Polynomial_t * roots_trinomial(struct Polynomial_t * self);
 

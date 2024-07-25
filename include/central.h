@@ -6,15 +6,15 @@
 #define __CENTRAL_H__
 #include <complex.h>
 
-#define USE_DOUBLE 0
+#define USE_DOUBLE 1
 #if USE_DOUBLE
 #define prec_t double
-#define PRNT_SPEC 1.3le
+#define PRNT_SPEC "1.3le"
 #else
 #define prec_t float
 #define PRNT_SPEC "1.3e"
 #endif
-#define prec_c_t prec_t _Complex
+#define prec_c_t complex prec_t 
 #define DEBUG_PRINTS 1
 
 #endif
