@@ -89,6 +89,5 @@ int64_t fac(int x) {
 void scale_to_taylor(prec_c_t * terms, int num_ele) {
 	for (int i=0; i < num_ele; ++i) {
 		terms[i] = terms[i]/fac(i);
-		/* printf("%i->%1.3e\n",i,terms[i]); */
 	}
 }

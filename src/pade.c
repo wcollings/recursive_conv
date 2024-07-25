@@ -16,11 +16,9 @@ struct Pade_t * pade_init(prec_c_t *A, prec_c_t *B,int M, int N) {
 	self->num=malloc(sizeof(struct Polynomial_t));
 	self->denom=malloc(sizeof(struct Polynomial_t));
 	self->num->num_terms=M;
+	self->num->terms=A;
 	self->denom->num_terms=N;
-	self->num->terms=malloc(sizeof(prec_c_t)*M);
-	self->denom->terms=malloc(sizeof(prec_c_t)*N);
-	memcpy(self->num->terms,A,sizeof(prec_c_t)*M);
-	memcpy(self->denom->terms,B,sizeof(prec_c_t)*N);
+	self->denom->terms=B;
 	return self;
 }
 struct Pade_t * pade_init_with_offset(prec_c_t *A, prec_c_t *B,int M, int N,prec_c_t offset) {
@@ -31,15 +29,9 @@ struct Pade_t * pade_init_with_offset(prec_c_t *A, prec_c_t *B,int M, int N,prec
 
 struct Pade_t * pade_init_poly(struct Polynomial_t * num, struct Polynomial_t * denom) {
 	struct Pade_t * self = malloc(sizeof(struct Pade_t));
+	self->num=num;
+	self->denom=denom;
 	self->vals=Vals;
-	int M=num->num_terms;
-	int N=denom->num_terms;
-	self->num=malloc(sizeof(struct Polynomial_t));
-	self->denom=malloc(sizeof(struct Polynomial_t));
-	self->num->terms=malloc(sizeof(prec_c_t)*M);
-	self->denom->terms=malloc(sizeof(prec_c_t)*N);
-	memcpy(self->num->terms,num->terms,sizeof(prec_c_t)*M);
-	memcpy(self->denom->terms,denom->terms,sizeof(prec_c_t)*N);
 	return self;
 }
 
@@ -91,16 +83,38 @@ void pade_print(struct Pade_t * self) {
 	printf("%s\n",center);
 	printf("      %s\n",denom);
 }
+
+void centerline(int num) {
+	for (int i=0; i<num; ++i) 
+		putchar('-');
+}
 void pade_print_roots(struct Pade_t * self) {
-	char center[300];
-	snprintf(center,7,"r(x)= ");
 	char num[300];
 	char denom[300];
 	char tn[30];
 	char td[30];
+	int nn, nd;
+	printf("       \n");
+	printf("r(x) = \n");
+	printf("       ");
+	printf("\e[2A");
 	for (int i=0; i < self->num->num_terms; ++i) {
-
+		printf("\e[1B");
+		printf(" + ");
+		printf("\e[1A");
+		nn=snprintf(tn,30,"%-"PRNT_SPEC"%+"PRNT_SPEC"i",creal(self->num->terms[i]),cimag(self->num->terms[i]));
+		nd=snprintf(td,30,"s%+"PRNT_SPEC"%+"PRNT_SPEC"i",-creal(self->denom->terms[i]),-cimag(self->denom->terms[i]));
+		int len = (nn>nd? nn:nd);
+		printf("%s",tn);
+		printf("\e[1B\e[%dD",nn);
+		centerline(len);
+		printf("\e[1B\e[%dD",len);
+		printf("%s",td);
+		printf("\e[2A");
+		fflush(stdout);
 	}
+	printf("\e[2B");
+	printf("\n");
 }
 
 prec_c_t pade_eval(struct Pade_t * self, prec_c_t s) {
@@ -117,7 +131,6 @@ prec_c_t pade_eval(struct Pade_t * self, prec_c_t s) {
 struct Pade_t * pade_create_fit(struct Polynomial_t * taylor,int m) {
 	int n=taylor->num_terms-m-1;
 	flip_arr(taylor->terms,taylor->num_terms);
-	/* poly_print(taylor); */
 	prec_c_t ** lower = mat_init(n,n+1,sizeof(prec_c_t));
 	for (int i=0; i < n; ++i) {
 		for (int j=0; j < n; ++j) {
@@ -136,7 +149,6 @@ struct Pade_t * pade_create_fit(struct Polynomial_t * taylor,int m) {
 	for (int i=0; i < n; ++i) {
 		b_terms[i+1] = lower[i][n];
 	}
-	/* mat_print(lower,n,n+1); */
 	mat_free(lower,n);
 	prec_c_t ** upper= mat_init(m+1,m+1,sizeof(prec_c_t));
 	for (int i=0; i < m+1; ++i) {
@@ -154,10 +166,6 @@ struct Pade_t * pade_create_fit(struct Polynomial_t * taylor,int m) {
 	flip_arr(b_terms,n+1);
 	flip_arr(taylor->terms,taylor->num_terms);
 	struct Pade_t * res = pade_init(a_terms,b_terms,m+1,n+1);
-	free(b_terms);
-	free(a_terms);
-	/* poly_print(res->num); */
-	/* poly_print(res->denom); */
 	return res;
 }
 
@@ -167,39 +175,33 @@ struct Pade_t * pade_separate(struct Pade_t * self) {
 	printf("given pade approximation:\n");
 	pade_print(self);
 	#endif
-	prec_c_t ** arr=mat_init(self->denom->num_terms,
-								    self->denom->num_terms+1,
+	prec_c_t ** arr=mat_init(self->denom->num_terms-1,
+								    self->denom->num_terms,
 								    sizeof(prec_c_t));
 	struct Polynomial_t * roots=poly_get_roots(self->denom);
-	printf("The roots are:\n");
-	poly_print(roots);
+	int end=self->denom->num_terms-1;
 	for (int i=0; i < roots->num_terms; ++i) {
-		struct Polynomial_t * temp = poly_sd_1term(self->denom, roots->terms[i]);
-		for (int j=0; j < temp->num_terms; ++j) {
-			arr[j][i] = temp->terms[j];
-		}
-		poly_free(temp);
+		// This works as long as there are only 2 roots, i.e. if we're using P[1,2]
+		arr[0][i]=1;
+		arr[1][i]=roots->terms[i];
 	}
-
-	int end=self->denom->num_terms;
 	int i=0;
 	for (; i < self->num->num_terms; ++i) {
 		arr[i][end]=self->num->terms[i];
 	}
-	for (; i < self->denom->num_terms; ++i) {
+	for (; i < self->denom->num_terms-1; ++i) {
 		arr[i][end]=0;
 	}
 	rref(arr,end,end+1);
 	struct Polynomial_t * temp = malloc(sizeof(struct Polynomial_t));
 	temp->terms = malloc(sizeof(prec_c_t)*self->denom->num_terms);
-	temp->num_terms=self->denom->num_terms;
+	temp->num_terms=roots->num_terms;
 	for (i=0; i<temp->num_terms; ++i) {
 		temp->terms[i]=arr[i][end];
 	}
-	mat_free(arr,self->denom->num_terms); 
+	flip_arr(temp->terms,temp->num_terms);
+	mat_free(arr,self->denom->num_terms-1); 
 	struct Pade_t * ret=pade_init_poly(temp, roots);
 	ret->vals=Roots;
-	poly_free(temp);
-	poly_free(roots);
 	return ret;
 }

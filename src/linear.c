@@ -61,19 +61,16 @@ void rref(prec_c_t ** mat, int m, int n) {
 					prec_c_t __B = otherCoeff*mat[col][k];
 					mat[row][k] = __A-__B;
 				}
-				printf("Next row cleared\n");
-				mat_print(mat,m,n);
 			}
 		}
 	}
-	mat_print(mat,m,n);
 	for (int row = 0; row < m; ++row) {
 		mat[row][n - 1] = mat[row][n - 1] / mat[row][row];
 		mat[row][row] = 1;
 	}
-/* #if DEBUG_PRINTS */
-/* 	mat_print(mat,m,n); */
-/* #endif */
+#if DEBUG_PRINTS
+	mat_print(mat,m,n);
+#endif
 }
 
 /*

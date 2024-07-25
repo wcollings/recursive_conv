@@ -161,18 +161,18 @@ void step_resistance(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
 	prec_t c0 = 0.2/exp(b*c);
 	prec_t interp_t = curr_t - b;
 	prec_t out1 = c0*interpolate(SOLV->tt[1],
-			SOLV->xx[1],
-			SOLV->tt[0],
-			SOLV->xx[0],
-			interp_t);
+										  SOLV->xx[1],
+										  SOLV->tt[0],
+										  SOLV->xx[0],
+										  interp_t);
 	prec_t out2 = d*SOLV->xx[0];
 	SOLV->yy[0][0] = out1+out2;
 }
 struct Solver_t * gSOLV=NULL;
 prec_t result(int argc, prec_t *argv) {
 	if (gSOLV==NULL) {
-		prec_t A[]={0.5,-0.25};
-		prec_t B[]={0,0.020833,0,-0.0020833};
+		prec_c_t A[]={0.5,-0.25};
+		prec_c_t B[]={0,0.020833,0,-0.0020833};
 		struct Pade_t * p=pade_init(A,B,2,4);
 		gSOLV=solver_init(2, p);
 	}

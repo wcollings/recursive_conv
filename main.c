@@ -26,15 +26,16 @@ int main() {
 	int M=1, N=2, x_step=10;
 	prec_c_t * derivs = take_derivatives(&L,center,30);
 	struct Polynomial_t * taylor = poly_init_bare(N+M+1);
-	free(taylor->terms);
 	flip_arr(derivs, N+M+1);
 	taylor->terms = derivs;
 	struct Polynomial_t * out=poly_recenter(taylor,2e5);
 	struct Pade_t * approx = pade_create_fit(out,M);
-	pade_separate(approx);
+	struct Pade_t * sep=pade_separate(approx);
+	pade_print_roots(sep);
 	poly_free(taylor);
 	poly_free(out);
 	pade_free(approx);
+	pade_free(sep);
 	/* struct Solver_t * solv = solver_init(2, approx); */
 	/* solv->cb=&print_results; */
 	return 0;

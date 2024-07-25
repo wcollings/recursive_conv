@@ -1,0 +1,42 @@
+Pade:
+	create:
+		lower: 121,140
+		b_terms: 134,157
+		a_terms: 151,158
+		upper: 141,152
+		res ->
+		
+	separate:
+		arr: 170,199
+		roots: 173,203
+		temp: 177,181
+		temp: 193,202
+		ret ->
+
+Poly:
+	add:
+		res ->
+	mul:
+		res ->
+	synthetic_div:
+		res ->
+	get_roots:
+		roots: ->
+	
+	pascal:
+		tri: ->
+	recenter:
+		tri: 166, 176
+		dest ->
+	diff:
+		out ->
+	roots_bi:
+		roots ->
+	roots_tri:
+		inner ->
+
+linear:
+	double_sort:
+		maxColElemIndex: 101,140
+		flagArray: 105,141
+		sortedMatrix: 129,142

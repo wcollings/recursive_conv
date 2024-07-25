@@ -34,19 +34,26 @@ struct Pade_t {
 	struct Polynomial_t * num;
 	struct Polynomial_t * denom;
 };
-void pade_iter(struct Pade_t * self);
 
 /*
- * Initialize a Pade Approximant using two arrays
+ * Initialize a Pade Approximant using two arrays. 
+ * This object assumed ownership of the arrays
 */
 struct Pade_t * pade_init(prec_c_t *A, prec_c_t *B,int M, int N);
+
+/*
+ *	If there's a K_0 term that we need to remember, this will do it
+ * This object assumed ownership of the arrays
+*/
 struct Pade_t * pade_init_with_offset(prec_c_t *A, prec_c_t *B,int M, int N,prec_c_t offset);
 
 void pade_free(struct Pade_t * self);
 void pade_print(struct Pade_t * self);
+void pade_print_roots(struct Pade_t * self);
 
 /*
- * Initialize a Pade Approximant using two polynomials
+ * Initialize a Pade Approximant using two polynomials. 
+ * This object assumes ownership of the polynomials
 */
 struct Pade_t * pade_init_poly(struct Polynomial_t * num, struct Polynomial_t * denom);
 

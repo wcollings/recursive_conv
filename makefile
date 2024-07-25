@@ -2,10 +2,10 @@ IDIR=include
 cc=gcc
 CFLAGS=-I$(IDIR) -fPIC -g
 LIBS=-lm
-_DEPS=pade.h sara.h poly.h linear.h deriv.h interpolate.h csv.h central.h
+_DEPS=pade.h sara.h poly.h linear.h deriv.h interpolate.h central.h
 DEPS=$(patsubst %,$(IDIR)/%,$(_DEPS))
 ODIR=obj
-_OBJ=pade.o sara.o poly.o linear.o deriv.o interpolate.o csv.o
+_OBJ=pade.o sara.o poly.o linear.o deriv.o interpolate.o
 OBJ=$(patsubst %,$(ODIR)/%,$(_OBJ))
 
 sara_test:main.c $(OBJ)

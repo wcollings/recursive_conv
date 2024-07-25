@@ -28,10 +28,8 @@ struct Polynomial_t {
 };
 
 
-void poly_iter(struct Polynomial_t * self);
 /*
- * Initialize a polynomial structure to hold a given number of elements. The elements need to
- * then be added by you!
+ * Initialize a polynomial structure to hold a given number of elements. The elements need to then be added by you! They are _not_ malloc'd
 */
 struct Polynomial_t * poly_init_bare(int num_terms);
 
