@@ -44,6 +44,12 @@ class Poly:
 		else:
 			raise IndexError(f"I don't know how to find the roots of a {len(self)-1} degree polynomial!")
 
+	def depress(self) ->'Poly':
+		if self.coeff[0] == 0:
+			return deepcopy(self)
+		scale = self.coeff[0]
+		return Poly([t/scale for t in self.coeff])
+
 	def recenter(self,c):
 		N = len(self)
 		tri = pascal(N)
@@ -54,6 +60,7 @@ class Poly:
 				loc = sumup(N-j-1)+(i-j)
 				bn = self.coeff[j]
 				temp=tri[loc]*bn*pow(c,i-j)
+				print(tri[loc])
 				term += temp
 			dst[i] = term
 		self.coeff=dst
@@ -105,7 +112,7 @@ class Poly:
 		if self.saved_as_roots:
 			res = []
 			last_val = None
-			for v in self.coeff:
+			for v in self.coeff[::-1]:
 				if last_val == v:
 					res[-1]+="^2"
 				if isinstance(v,complex):
@@ -117,10 +124,16 @@ class Poly:
 		if self.print_as_tuple:
 			return str(self.coeff)
 		res=[]
-		for (i,v) in enumerate(self.coeff):
+		temp=""
+		pow=len(self.coeff)-1
+		temp=f"{self.coeff[0]:-1.3e}"
+		if pow > 0:
+			temp+="x^"+str(pow)
+		res.append(temp)
+		for (i,v) in enumerate(self.coeff[1:]):
 			temp=""
-			pow=len(self.coeff)-i-1
-			temp=f"{v:+}"
+			pow=len(self.coeff)-i-2
+			temp=f"{v:+1.3e}"
 			if pow > 0:
 				temp+="x^"+str(pow)
 			res.append(temp)
@@ -195,12 +208,12 @@ def cubic_find_roots_new(p:Poly):
 	
 def synth_div(p:Poly, z:float):
 	res= Poly([])
-	res.coeff.append(1)
-	last = 1
-	for c in p.coeff[1:]:
+	last = p.coeff[0]
+	res.coeff.append(last)
+	for c in p.coeff[1:-1]:
 		res.coeff.append(last*z+c)
 		last = res.coeff[-1]
-	return res
+	return res.depress()
 
 	
 def cubic_find_roots(p:Poly):

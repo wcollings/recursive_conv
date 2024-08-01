@@ -1,4 +1,4 @@
-from ddiff import ddiff,scale_to_taylor
+from deriv import der
 from pade import solve_system,eval_pade
 from poly import Poly
 from math import atan
@@ -52,6 +52,9 @@ if __name__=="__main__":
 	step=100
 	ne=10
 	xs=list(range(start,start+(ne*step),step))
+	for i in range(7):
+		j=7
+		approx=eval_stencil(L,x,h,i+1,stencils[j][i])
 	L1 = lambda x:L(x,start)
 	ys=tuple(map(L1,xs))
 	dd=scale_to_taylor(ddiff(xs,ys))

@@ -1,11 +1,50 @@
-from typing import Sequence
+from typing import Sequence, Iterable
 from ddiff import ddiff
 from poly import Poly,synth_div
-from numpy import linspace, ones,zeros,chararray,array,logspace,ndarray
+from numpy import linspace, ones,zeros,chararray,array,logspace,ndarray,vectorize
+import numpy as np
 from numpy.linalg import solve
-from math import log10,ceil,exp,atan
+from math import log10,ceil,exp,atan, factorial as fac
 from si_num import to_si
 from matplotlib import pyplot as plt
+
+class Pade:
+	num:Poly
+	denom:Poly
+	sep:bool
+	def __init__(self,n:Poly,d:Poly):
+		self.num=n
+		self.denom=d
+		self.sep=False
+	def __call__(self,x:float) -> float:
+		return self.num(x)/self.denom(x)
+	def __repr__(self):
+		out=''
+		if self.sep:
+			center="r(x)= "
+			num = " "*6
+			denom = " "*6
+			temp_n =""
+			temp_d=""
+			for n,d in zip(self.num.coeff,self.denom.coeff):
+				temp_n = f"{n:1.2e}"
+				temp_d = f"(x{d:-1.2e})"
+				if len(temp_n) > len(temp_d):
+					center+="+ " + "-"*len(temp_n)
+					num+="  " + temp_n
+					denom +="  " + f"{temp_d: ^{len(temp_n)}}"
+				else:
+					center+=" + " + "-"*len(temp_d)
+					num+="   " + f"{temp_n: ^{len(temp_d)}}"
+					denom +="   " + temp_d
+			out = num+"\n" + center+"\n" +denom
+		else:
+			num=str(self.num)
+			denom=str(self.denom)
+			str_len=max(map(len,[num,denom]))
+			center="r(x)= "+ "-"*(str_len)+'\n'
+			out=f"{' '*6}{num:^{str_len}s}\n"+center+f"{' '*6}{denom:^{str_len}s}"
+		return out
 
 def pascal(row,invert=True) -> ndarray:
 	if row==1:
@@ -94,11 +133,14 @@ def sample_matrix(M,N):
 	y=chararray((N,1),itemsize=charlen+1)
 	lower=chararray((N,N),itemsize=charlen)
 	lower[:]='0'*charlen
+	b_arr = ["s"+str(i) for i in range(M+N+1)]
 	for i in range(N):
 		for j in range(N):
 			if i+M>=j:
-				lower[i][j]="s"+str(i-j+M)
-		y[i]="-s"+str(M+i+1)
+				lower[i][j]=b_arr[i-j+M]
+				# lower[i][j]="s"+str(i-j+M)
+		y[i]="-"+b_arr[M+i+1]
+		# y[i]="-s"+str(M+i+1)
 	for r in range(N):
 		print('['+','.join(lower[r].decode()),end=']')
 		print(y[r].decode())
@@ -130,10 +172,14 @@ def L(f):
 	f0=2e4
 	res=(0.6366*a)*atan(-c*(f-f0))+b;
 	return res
-def solve_system(s:list[float],M:int,N:int) -> tuple[tuple[float,...],tuple[float,...]]:
+def solve_system(p:Poly,M:int,N:int) -> Pade:
 	"""
-	Create a 1-point Pade approximation, given a list of coefficients and the length of the top and bottom polynomials
+	Create a Pade approximation, given a Taylor series and the length of the top and bottom polynomials
+	len(p) must equal (M+N+1)
 	"""
+	s=p.coeff[::-1]
+	# print("s")
+	# print(s)
 	y=zeros((N,1))
 	lower=zeros((N,N))
 	for i in range(N):
@@ -141,7 +187,10 @@ def solve_system(s:list[float],M:int,N:int) -> tuple[tuple[float,...],tuple[floa
 			if i+M>=j:
 				lower[i][j]=s[i-j+M]
 		y[i]=-s[M+i+1]
+	print(lower)
+	print(y)
 	b=solve(lower,y)
+	print(b)
 	y=ones((M+1,1))
 	upper=zeros((M+1,M+1))
 	for i in range(M+1):
@@ -150,58 +199,61 @@ def solve_system(s:list[float],M:int,N:int) -> tuple[tuple[float,...],tuple[floa
 				upper[i][j]=s[i-j]
 	b_offset=ones((M+1,1))
 	b_offset[1:]=b[:M]
+	print()
+	print(upper)
 	a=upper@b_offset
-	a=(*map(float,a.flatten()),)
-	b=(1,*map(float,b.flatten()),)
-	return a,b
-def get_err(aa,bb,plot=False):
+	a=list(map(float,a.flatten()))
+	b=[1]+list(map(float,b.flatten()))
+	return Pade(Poly(a[::-1]),Poly(b[::-1]))
+	# return Pade(Poly(a[::-1]).recenter(-2e6),Poly(b[::-1]).recenter(-2e6))
+
+def get_err(rep,plot=False):
 	xmax=10000
-	xs=logspace(1,8,10000)
+	xs=logspace(1,9,10000)
 	sig=tuple(map(L,xs))
+	if not isinstance(rep,Iterable):
+		rep=[rep]
 	# sig=tuple(map(lambda x:1/(1+exp(x)),xs))
 	sig=array(sig)
-	approx=tuple(map(lambda x:eval_pade(aa,bb,x),xs))
-	approx=array(approx)
-	err=(sig-approx)/sig
+	approx=[]
+	for r in rep:
+		# print(r.disc)
+		approx.append(vectorize(r)(xs))
+		# err=(sig-approx[-1])/sig
 	if plot:
 		plt.semilogx(xs,sig)
-		plt.semilogx(xs,approx)
+		for i in approx:
+			plt.semilogx(xs,i)
 		plt.ylim((1.78e-9,3e-9))
 		plt.show()
-	return sum(err)
+	# return sum(err)
 
-def separate(num:Poly,denom:Poly):
-	mat = zeros((len(denom),len(denom)+1))
-	roots = denom.get_roots()
+def separate(rep:Pade):
+	mat = zeros((len(rep.denom)-1,len(rep.denom)-1),dtype=np.complex64)
+	print(mat)
+	roots = rep.denom.get_roots()
+	print(f"The roots of {rep.denom} are:\n {roots}")
 	for i in range(len(roots)):
-		temp = synth_div(denom,roots.coeff[i])
+		temp = synth_div(rep.denom,roots.coeff[i])
 		mat[:,i] = temp.coeff
-	end = len(denom)
+	b=rep.num.coeff[:len(rep.denom)]
+	out=Pade(Poly(solve(mat,b)),roots) #pyright:ignore
+	out.sep=True
+	return out
 
-
-
-
-def hf(n,N):
-	num=3.14159-2*N*(-1)**n
-	den=(2*n+1)
-	return num/den
-
-def lf(n):
-	return 1/(2*n+1)
+def twopt(rep,start):
+	def inner(x):
+		return L(start) + rep(x)
+	inner.disc = f"{start} + ({str(rep)})"
+	return inner
 
 if __name__=="__main__":
-	start=int(1e6)
-	step=20
-	ne=8
-	xs=list(range(start,start+(ne*step),step))
-	ys=tuple(map(L,xs))
-	dd=ddiff(xs,ys)
-	# maclaurin_coeffs=[2.158517e-09,-1.332268e-16,-2.467162e-19,1.827528e-21,-7.614698e-24,2.030586e-26,0.000000e+00,-2.558057e-31,]
-	# aa=[5.4284e34,6.9769e40,7.0833e46,3.8223e52][::-1]
-	# bb= [-4.8976e32, 2.708e43, 2.618e49, 2.731e55, 1.256e61][::-1]
-	# sample_matrix(3,4)
-	aa,bb=solve_system(dd,3,4)
-	aa=recenter_poly(aa,start)
-	bb=recenter_poly(bb,start)
-	print_pade(aa,bb,start)
-	get_err(aa,bb,True)
+	x1 = 2e5
+	x0 = 1e8
+	coeff = list(map(float,open("L_deriv.csv",'r').readline().split(',')))[:4]
+	print(coeff)
+	c=Poly(coeff[::-1]).recenter(x1)
+	print(c)
+	pade=solve_system(c,1,2)
+	print(pade)
+	print(separate(pade))

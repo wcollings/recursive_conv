@@ -89,7 +89,7 @@ def ninept_2(f,x,h):
 	s = lambda h:f(x+h)+f(x-h)
 	e0=45360*f(x)
 	e1=5502*s(h)
-	e2=61656*s(2*h)
+	e2=62656*s(2*h)
 	e3=27621*s(3*h)
 	e4=6488*s(4*h)
 	e5=665*s(5*h)
@@ -120,14 +120,16 @@ def ninept_7(f,x,h):
 
 def eval_stencil(f,x,h,p,coeffs):
 	tot = 0
-	denom = coeffs.pop()
+	denom = coeffs[-1]
+	coeff = coeffs[:-1]
+	# denom = coeffs.pop()
 	if p%2:
 		sd = lambda h:f(x+h)-f(x-h)
 	else:
 		sd=lambda h:f(x+h)+f(x-h)
 		tot=coeffs[0]*f(x)
-		coeffs.pop(0)
-	tot += sum(c*sd(h*(i+1)) for i,c in enumerate(coeffs))
+		coeff=coeffs[1:-1]
+	tot += sum(c*sd(h*(i+1)) for i,c in enumerate(coeff))
 	# breakpoint()
 	return tot/(denom*pow(h,p))
 
@@ -140,37 +142,41 @@ stencils = {
 		[-30,16,-1,12]
 		],
 	7:[
-		[35,-56,28,-8,1,-70],
+		# [35,-56,28,-8,1,-70],
+		[45,-9,1,60],
 		[-120,25,44,-9,120],
 		[-13,8,-1,8],
-		[0,899,-1612,837,-124,930],
+		[0,-13,16,-3,240],
+		# [0,899,-1612,837,-124,930],
 		[5,-4,1,2],
 		[0,-217,434,-279,62,217],
 		[-14,14,-6,1,2]
 		],
-	9:[]
+	9:[
+		[864,-72,-32,9,1320],
+		[-45360,5502,62656,-27621,6488,-665,90720],
+		[70089,-52428,14607,-2522,205,-30240],
+		[0,7322,-10336,6081,-1552,165,3360],
+
+		]
 }
+
+L_derivs = list(map(float,open("L_deriv.csv").readline().split(',')))
 
 if __name__=="__main__":
 	from poly import Poly
-	f=Poly([1,4,5,2,3,5,4,2])
+	c = Poly(L_derivs[::-1])
 	ordinals = ["first","second","third","fourth","fifth","sixth","seventh"]
-	x=3
+	# print(sevenpt(L,2e6,1/10))
+	x0=1e8
+	x1=2e5
 	o=7
-	h=1/10
-	deriv=Poly([1,4,5,2,3,5,4,2])
+	h=10
+	l = lambda s:L(s)-L(x0)
+	print(L(x0))
+	approx=eval_stencil(l,x1,2,3,stencils[7][0])
+	print(f"zeroth:\t{L(x1)-L(x0):.4e}")
 	for i in range(7):
-		deriv=deriv.diff()
-		print(f"{ordinals[i]} derivative")
-		print(f"true answer: {deriv(x)}")
-		for j in [3,5,7,9]:
-			if len(stencils[j]) > i:
-				approx=eval_stencil(f,x,h,i+1,stencils[j][i])
-				err = abs((deriv(x)-approx))/approx
-				print(f"using {j}-pt:  {approx:.4f} ({err=:1.2e})")
-		print("-------------")
-	print("Derivatives of L:")
-	for i in range(7):
-		j=7
-		approx=eval_stencil(L,x,h,i+1,stencils[j][i])
-		print(f"{ordinals[i]}:\t{approx:.4e}")
+		approx=eval_stencil(l,x1,h,i+1,stencils[7][i])
+		err = abs((L_derivs[i]-approx)/L_derivs[i])
+		print(f"{ordinals[i]}:\t{approx}\t({err:1.4e})")
