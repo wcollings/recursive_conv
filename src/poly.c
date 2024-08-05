@@ -1,5 +1,4 @@
 #include "../include/poly.h"
-#include <math.h>
 
 void poly_iter(struct Polynomial_t * self) {
 	prec_c_t temp;
@@ -21,6 +20,7 @@ struct Polynomial_t * poly_init_bare(int num_terms) {
 	/* out->terms = calloc(num_terms,sizeof(prec_c_t)); */
 	return out;
 }
+
 struct Polynomial_t * poly_add(struct Polynomial_t * a, struct Polynomial_t * b) {
 	struct Polynomial_t * res=malloc(sizeof(struct Polynomial_t));
 	// a should always be the bigger of the two
@@ -40,6 +40,7 @@ struct Polynomial_t * poly_add(struct Polynomial_t * a, struct Polynomial_t * b)
 	}
 	return res;
 }
+
 struct Polynomial_t * poly_mul(struct Polynomial_t * a, struct Polynomial_t * b) {
 	struct Polynomial_t * res=malloc(sizeof(struct Polynomial_t));
 	// a should always be the bigger of the two
@@ -57,6 +58,7 @@ struct Polynomial_t * poly_mul(struct Polynomial_t * a, struct Polynomial_t * b)
 	}
 	return res;
 }
+
 prec_c_t poly_eval(struct Polynomial_t * a, prec_c_t val) {
 	prec_c_t res=a->terms[0];
 	for (int i=1; i < a->num_terms; ++i) {
@@ -64,6 +66,7 @@ prec_c_t poly_eval(struct Polynomial_t * a, prec_c_t val) {
 	}
 	return res;
 }
+
 void poly_print(struct Polynomial_t * p) {
 	if (p->tp==Vals) {
 		printf("(%+"PRNT_SPEC"%+"PRNT_SPEC"i)x^%d",creal(p->terms[0]),cimag(p->terms[0]),p->num_terms);
@@ -108,6 +111,7 @@ struct Polynomial_t * poly_get_roots(struct Polynomial_t * p) {
 	}
 	return roots;
 }
+
 void poly_free(struct Polynomial_t * p) {
 	free(p->terms);
 	free(p);

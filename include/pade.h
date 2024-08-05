@@ -13,8 +13,8 @@
 #include "linear.h"
 #include "csv.h"
 #include <stdlib.h>
-#include <string.h> // just need this for memcpy
 #include <math.h>
+#include <stdio.h>
 
 /*
  * Holds the terms for a divided fraction representation. Either in the form:
@@ -29,10 +29,10 @@
  *
  */
 struct Pade_t {
-	prec_c_t offset;
-	enum values_type_sel vals;
-	struct Polynomial_t * num;
-	struct Polynomial_t * denom;
+	prec_c_t offset; /* Once solved, this saves K_0 if it exists */
+	enum values_type_sel vals; /* a selector flag to say what format this is in - normal fractions, or already separated */
+	struct Polynomial_t * num; /* The numerator(s) */
+	struct Polynomial_t * denom; /* The denominator(s) */
 };
 
 /*

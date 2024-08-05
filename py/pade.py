@@ -12,18 +12,25 @@ class Pade:
 	num:Poly
 	denom:Poly
 	sep:bool
-	def __init__(self,n:Poly,d:Poly):
+	k0:float
+	def __init__(self,n:Poly,d:Poly,k0:float=0.):
 		self.num=n
 		self.denom=d
 		self.sep=False
+		self.k0=k0
 	def __call__(self,x:float) -> float:
-		return self.num(x)/self.denom(x)
+		if self.sep:
+			ret=self.k0
+			for K,s in zip(self.num.coeff,self.denom.coeff):
+				ret += K/(x-s)
+			return ret
+		return self.k0 + (self.num(x)/self.denom(x))
 	def __repr__(self):
 		out=''
 		if self.sep:
-			center="r(x)= "
-			num = " "*6
-			denom = " "*6
+			center="r(x)= " + str(self.k0) + " + "
+			num = " "*len(center)
+			denom = " "*len(center)
 			temp_n =""
 			temp_d=""
 			for n,d in zip(self.num.coeff,self.denom.coeff):
@@ -42,8 +49,9 @@ class Pade:
 			num=str(self.num)
 			denom=str(self.denom)
 			str_len=max(map(len,[num,denom]))
-			center="r(x)= "+ "-"*(str_len)+'\n'
-			out=f"{' '*6}{num:^{str_len}s}\n"+center+f"{' '*6}{denom:^{str_len}s}"
+			center_len = len("r(x)= " + str(self.k0) + " + ")
+			center="r(x)= " + str(self.k0) + " + " + "-"*len(max(num,denom))+'\n'
+			out=f"{' '*center_len}{num:^{str_len}s}\n"+center+f"{' '*center_len}{denom:^{str_len}s}"
 		return out
 
 def pascal(row,invert=True) -> ndarray:
@@ -221,23 +229,25 @@ def get_err(rep,plot=False):
 		approx.append(vectorize(r)(xs))
 		# err=(sig-approx[-1])/sig
 	if plot:
-		plt.semilogx(xs,sig)
-		for i in approx:
-			plt.semilogx(xs,i)
+		plt.semilogx(xs,sig,label="actual")
+		for n,i in enumerate(approx):
+			plt.semilogx(xs,i,label=f"approx #{n}")
 		plt.ylim((1.78e-9,3e-9))
+		plt.legend()
 		plt.show()
 	# return sum(err)
 
 def separate(rep:Pade):
 	mat = zeros((len(rep.denom)-1,len(rep.denom)-1),dtype=np.complex64)
-	print(mat)
+	# print(mat)
 	roots = rep.denom.get_roots()
-	print(f"The roots of {rep.denom} are:\n {roots}")
-	for i in range(len(roots)):
-		temp = synth_div(rep.denom,roots.coeff[i])
-		mat[:,i] = temp.coeff
-	b=rep.num.coeff[:len(rep.denom)]
-	out=Pade(Poly(solve(mat,b)),roots) #pyright:ignore
+	# print(f"The roots of {rep.denom} are:\n {roots}")
+	K=[]
+	for r in roots.coeff:
+		temp = synth_div(rep.denom,r)
+		K.append(rep.num(r)/temp(r))
+	# print(K)
+	out=Pade(Poly(K),roots) #pyright:ignore
 	out.sep=True
 	return out
 
@@ -248,12 +258,11 @@ def twopt(rep,start):
 	return inner
 
 if __name__=="__main__":
-	x1 = 2e5
-	x0 = 1e8
-	coeff = list(map(float,open("L_deriv.csv",'r').readline().split(',')))[:4]
-	print(coeff)
-	c=Poly(coeff[::-1]).recenter(x1)
-	print(c)
-	pade=solve_system(c,1,2)
-	print(pade)
-	print(separate(pade))
+	derivs=list(map(float,open("L_deriv.csv").readline().split(",")))
+	poly=Poly(derivs[::-1]).recenter(2e5)
+	p=solve_system(poly,1,2)
+	p.k0=L(1e8)
+	print(p)
+	get_err([poly,p],True)
+
+	# get_err([p,separate(p)],True)

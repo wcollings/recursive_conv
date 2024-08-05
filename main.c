@@ -7,8 +7,10 @@
 #include "include/sara.h"
 
 void print_results(struct Solver_t * SOLV) {
-	prec_t output=SOLV->yy[0][0] + SOLV->yy[1][0];
-	printf("%f,%f\n",SOLV->curr_t,output);
+	int n=SOLV->eqs->num->num_terms;
+	prec_c_t output=SOLV->yy[n][0];
+	/* printf("%f,%"PRNT_SPEC"%+"PRNT_SPEC"i\n",SOLV->curr_t,creal(output),cimag(output)); */
+	printf("%f,%lf\n",SOLV->curr_t,creal(output));
 }
 
 prec_c_t L(prec_c_t f) {
@@ -30,20 +32,35 @@ int main() {
 	taylor->terms = derivs;
 	struct Polynomial_t * out=poly_recenter(taylor,2e5);
 	struct Pade_t * approx = pade_create_fit(out,M);
+	approx->offset=L(1e8);
 	struct Pade_t * sep=pade_separate(approx);
+	sep->offset=L(1e8);
+	pade_print(approx);
 	pade_print_roots(sep);
 	poly_free(taylor);
 	poly_free(out);
 	pade_free(approx);
 	pade_free(sep);
-	/* struct Solver_t * solv = solver_init(2, approx); */
-	/* solv->cb=&print_results; */
 	return 0;
-	/* float time=0; */
-	/* printf("t,v\n"); */
-	/* for (int i=0; i < 40; ++i) { */
-	/* 	step(solv,1,i); */
-	/* } */
+
+	struct Polynomial_t * num = poly_init_bare(2);
+	num->terms=malloc(2*sizeof(prec_c_t));
+	num->terms[0]=0.9478;
+	num->terms[1]=0.0522;
+	struct Polynomial_t * denom = poly_init_bare(2);
+	denom->terms=malloc(2*sizeof(prec_c_t));
+	denom->terms[0] = -2.105;
+	denom->terms[1] = -0.095;
+	sep=pade_init_poly(num,denom);
+	sep->offset=0;
+	sep->vals=Roots;
+	struct Solver_t * solv = solver_init(2, sep);
+	solv->cb=&print_results;
+	float time=0;
+	printf("t,v\n");
+	for (int i=0; i < 40; ++i) {
+		step(solv,1,i);
+	}
 	/* prec_t res=0; */
 	/* prec_t inpts[2]={1,2}; */
 	/* printf("TIME\tV\n"); */
@@ -52,5 +69,5 @@ int main() {
 	/* 	res=result(2,inpts); */
 	/* 	printf("%e\t%f\n",inpts[0],res); */
 	/* } */
-	/* return 0; */
+	return 0;
 }

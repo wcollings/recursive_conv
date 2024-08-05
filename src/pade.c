@@ -1,5 +1,5 @@
 #include "../include/pade.h"
-#include <stdio.h>
+#include <string.h>
 
 void pade_iter(struct Pade_t * self) {
 	prec_c_t temp;
@@ -41,7 +41,7 @@ void pade_free(struct Pade_t * self) {
 	free(self);
 }
 prec_c_t eval_with_roots(struct Pade_t * self,prec_c_t s) {
-	prec_c_t res=0;
+	prec_c_t res=self->offset;
 	for (int i=0; i < self->denom->num_terms; ++i) {
 		res += (self->num->terms[i])/(s-self->denom->terms[i]);
 	}
@@ -49,32 +49,68 @@ prec_c_t eval_with_roots(struct Pade_t * self,prec_c_t s) {
 }
 
 void pade_print(struct Pade_t * self) {
+	//copy numerator
 	char num[200];// = malloc(sizeof(char)*200);
-	char denom[200];// = malloc(sizeof(char)*200);
-	int num_ne=0, denom_ne=0;
-	int i;
-	for (i=0; i < self->num->num_terms-1; ++i) {
+	int num_ne=0;
+	for (int i=0; i < self->num->num_terms; ++i) {
 		int p = self->num->num_terms-i-1;
-		int sz = snprintf(&num[num_ne],30,"+(%-"PRNT_SPEC"%+"PRNT_SPEC"i)x^%d",creal(self->num->terms[i]),cimag(self->num->terms[i]),p);
+		char p1[7];
+		switch (p) {
+			case 0:
+				snprintf(p1,6,"");
+				break;
+			case 1:
+				snprintf(p1,6,"x");
+				break;
+			default:
+				snprintf(p1,6,"x^%d",p);
+		}
+		int sz=0;
+		if (cimag(self->num->terms[i])==0) { // purely real
+			sz = snprintf(&num[num_ne],30,"%+"PRNT_SPEC"%s",creal(self->num->terms[i]),p1);
+		} else if (creal(self->num->terms[i])==0) { //purely imaginary
+			sz = snprintf(&num[num_ne],30,"%+"PRNT_SPEC"j%s ",cimag(self->num->terms[i]),p1);
+		} else { // complex
+			sz = snprintf(&num[num_ne],30,"+(%-"PRNT_SPEC"%+"PRNT_SPEC"j)%s",creal(self->num->terms[i]),cimag(self->num->terms[i]),p1);
+		}
 		if (sz > 0) num_ne+=sz;
 	}
-	int sz = snprintf(&num[num_ne],30,"+(%-"PRNT_SPEC"%+"PRNT_SPEC"i)",creal(self->num->terms[i]),cimag(self->num->terms[i]));
-	/* int sz = snprintf(&num[num_ne],15,"%+1.4e",self->num->terms[self->num->num_terms-1]); */
-	if (sz > 0) num_ne+=sz;
-	for (i=0; i < self->denom->num_terms-1; ++i) {
+	// copy denominator
+	char denom[200];
+	int denom_ne=0;
+	for (int i=0; i < self->denom->num_terms; ++i) {
 		int p = self->denom->num_terms-i-1;
-		int sz = snprintf(&denom[denom_ne],30,"(%-"PRNT_SPEC"%+"PRNT_SPEC"i)x^%d",creal(self->denom->terms[i]),cimag(self->denom->terms[i]),p);
-		/* int sz = snprintf(&denom[denom_ne],15,"%+1.4ex^%d",self->denom->terms[i],p); */
+		char p1[7];
+		switch (p) {
+			case 0:
+				snprintf(p1,6,"");
+				break;
+			case 1:
+				snprintf(p1,6,"x");
+				break;
+			default:
+				snprintf(p1,6,"x^%d",p);
+		}
+		int sz=0;
+		if (cimag(self->denom->terms[i])==0) { // purely real
+			sz = snprintf(&denom[denom_ne],30,"%+"PRNT_SPEC"%s",creal(self->denom->terms[i]),p1);
+		} else if (creal(self->denom->terms[i])==0) { //purely imaginary
+			sz = snprintf(&denom[denom_ne],30,"%+"PRNT_SPEC"j%s ",cimag(self->denom->terms[i]),p1);
+		} else { // complex
+			sz = snprintf(&denom[denom_ne],30,"+(%-"PRNT_SPEC"%+"PRNT_SPEC"j)%s",creal(self->denom->terms[i]),cimag(self->denom->terms[i]),p1);
+		}
 		if (sz > 0) denom_ne+=sz;
 	}
-	sz = snprintf(&denom[denom_ne],30,"(%-"PRNT_SPEC"%+"PRNT_SPEC"i)",creal(self->denom->terms[i]),cimag(self->denom->terms[i]));
-	/* sz = snprintf(&denom[denom_ne],15,"%+1.4e",self->denom->terms[self->denom->num_terms-1]); */
-	if (sz > 0) denom_ne+=sz;
 	int len = (denom_ne>num_ne?denom_ne:num_ne);
 	char center[200];// = malloc(sizeof(char)*(len+6));
-	snprintf(center,7,"r(x)= ");
+	int copied=0;
+	if (self->offset !=0) {
+		copied=snprintf(center,40,"r(x) = %lf + ",creal(self->offset));
+	} else {
+		copied=snprintf(center,40,"r(x) = ");
+	}
 	for (int i=0; i < len; ++i) {
-		center[i+6]='-';
+		center[i+copied]='-';
 	}
 	center[len+6]='\0';
 	num[num_ne]='\0';
@@ -203,5 +239,6 @@ struct Pade_t * pade_separate(struct Pade_t * self) {
 	mat_free(arr,self->denom->num_terms-1); 
 	struct Pade_t * ret=pade_init_poly(temp, roots);
 	ret->vals=Roots;
+	ret->offset=self->offset;
 	return ret;
 }

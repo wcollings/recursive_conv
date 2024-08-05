@@ -20,6 +20,7 @@ class Poly:
 	print_as_you_go:bool
 	saved_as_roots:bool
 	def __init__(self,c:list,pat:bool=False,pag:bool=False,roots=False):
+		self.over_coeff=1.
 		self.coeff=[coeff for coeff in c]
 		self.print_as_tuple=pat
 		self.print_as_you_go=pag
@@ -48,7 +49,9 @@ class Poly:
 		if self.coeff[0] == 0:
 			return deepcopy(self)
 		scale = self.coeff[0]
-		return Poly([t/scale for t in self.coeff])
+		p=Poly([t/scale for t in self.coeff])
+		p.over_coeff=scale
+		return p
 
 	def recenter(self,c):
 		N = len(self)
@@ -142,10 +145,16 @@ class Poly:
 		# res.append(f"{v}x^{i}")
 		return "".join(res)
 	def __call__(self,x:float) -> float:
+		if self.saved_as_roots:
+			res=self.over_coeff
+			for i in self.coeff:
+				print(f"(x+{-i:-f})={x-i}")
+				res *= (x-i)
+			return res
 		res=self.coeff[0]
 		for v in self.coeff[1:]:
 			res=v+(x*res)
-		return res
+		return res*self.over_coeff
 	def __pow__(self,p):
 		if p==1:
 			return self
@@ -155,6 +164,7 @@ class Poly:
 
 def bi_find_roots(p:Poly):
 	out=Poly(p.coeff)
+	scale=out.coeff[0]
 	if out.coeff[0] != 1:
 		out.coeff=[c/out.coeff[0] for c in out.coeff]
 	out.coeff[1]/=2
@@ -166,7 +176,9 @@ def bi_find_roots(p:Poly):
 	else:
 		z.append(-b+sqrt(b**2-c))
 	z.append(c/z[0])
-	return Poly(z,roots=True)
+	p=Poly(z,roots=True)
+	p.over_coeff=scale
+	return p
 
 def cubic_find_roots_new(p:Poly):
 	assert len(p)==4
@@ -213,7 +225,7 @@ def synth_div(p:Poly, z:float):
 	for c in p.coeff[1:-1]:
 		res.coeff.append(last*z+c)
 		last = res.coeff[-1]
-	return res.depress()
+	return res
 
 	
 def cubic_find_roots(p:Poly):
@@ -297,22 +309,9 @@ def newton(f:Poly,xn:float,err:float=1e-8):
 	return xn
 
 if __name__=="__main__":
-	p1=Poly([1,-1])
-	p2=Poly([1,-2])
-	p3=Poly([1,-3])
-	p4=Poly([1,-4])
-	p12=p1*p2
-	p122=p12*p2
-	p1223=p122*p3
-	p12233=p1223*p3
-	p122334=p12233*p4
-	p0=Poly([2])
-	print(p1.coeff)
-	print(p1)
-	p0.print_as_you_go=False
-	p12=p1*p2
-	p122=p1*p2*p2*-2.0
-	p1223=p1*p2*p2*p3*1.5
-	p12233=p1*p2*p2*p3*p3*-1.5
-	p122334=p1*p2*p2*p3*p3*p4*0.75
-	print(p0+p12+p122+p1223+p12233+p122334)
+	d=Poly([5,11,1])
+	d1=d.get_roots()
+	d1.coeff=[s.real for s in d1.coeff]
+	print(d(4))
+	print(d1(4))
+	print(synth_div(d,d1.coeff[0]))

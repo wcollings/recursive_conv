@@ -15,22 +15,26 @@ void step_time(struct Time_s * t);
  * Holds all the information needed to compute the next value.
  * This includes history, solver order, current and past time steps, etc.
  *
+ * To solve these, we really need the time deltas, not the times themselves. To save computation,
+ * we can compute that once and save it, then save the last actual time so that we can compute
+ * the next time delta as well going forward.
+ *
 */
 struct Solver_t {
 	struct Pade_t * eqs;
-	prec_t curr_t;
+	prec_t curr_t; /* The last _actual_ time */
 	int order;
-	prec_t * tt;
-	prec_t * xx;
-	prec_t ** yy;
-	float * (*q)(float,float);
+	prec_t * tt; /* Past time deltas */
+	prec_t * xx; /* previous input states */
+	prec_c_t ** yy; /* previous output states */
+	prec_c_t (*qq)(float,float,int);
 	void (*cb)(struct Solver_t *); /* A callback function (optional) for printing intermediate results etc.*/
 };
 
-float * q1(float,float);
-float * q2(float,float);
-float * q3(float,float);
-float * q4(float,float);
+prec_c_t q1(float,float,int);
+prec_c_t q2(float,float,int);
+prec_c_t q3(float,float,int);
+prec_c_t q4(float,float,int);
 
 /*
  * Initialize a solver object

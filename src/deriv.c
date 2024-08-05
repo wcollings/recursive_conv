@@ -1,5 +1,4 @@
 #include "../include/deriv.h"
-#include <stdio.h>
 #define DIFF(h) (*fn)(x+h) - (*fn)(x-h)
 #define SUM(h) (*fn)(x+h) + (*fn)(x-h)
 

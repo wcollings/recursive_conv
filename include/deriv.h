@@ -1,6 +1,7 @@
 #include "../include/central.h"
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 /* Compute the first derivative of the function `fn` */
 prec_c_t sten_1(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h);

@@ -145,7 +145,7 @@ prec_c_t * mat_mul_vec(prec_c_t **mat, prec_c_t * v, int m, int n) {
 		for (int j=0; j <= i; ++j) {
 			res[i]+=mat[i][j]*v[j];
 		}
-		printf("res[%d]=(%-"PRNT_SPEC"%+"PRNT_SPEC"i)\n",i,creal(res[i]),cimag(res[i]));
+		/* printf("res[%d]=(%-"PRNT_SPEC"%+"PRNT_SPEC"i)\n",i,creal(res[i]),cimag(res[i])); */
 	}
 	return res;
 }
