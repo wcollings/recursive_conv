@@ -194,3 +194,22 @@ prec_t result(int argc, prec_t *argv) {
 	gSOLV->curr_t=argv[0];
 	return gSOLV->yy[0][0] + gSOLV->yy[1][0];
 }
+
+struct R_coeffs * R_coeffs_init(prec_t AA, prec_t BB, prec_t CC, prec_t s0) {
+	struct R_coeffs * self = malloc(sizeof(struct R_coeffs));
+	/*
+	self -> AA = AA;
+	self -> BB = BB;
+	self -> CC = CC;
+	self -> s0 = s0;
+	*/
+	self -> AA = 0.05518100543518667;
+	self -> BB = 1.1924882662140162e-08;
+	self -> CC = -0.2739;
+	self -> s0 = -0.03652;
+}
+
+void R_calculation(struct R_coeffs R_coeffs, prec_t x0) {
+	prec_t R_value = (R_coeffs.AA * x0 / exp(R_coeffs.CC * R_coeffs.s0)) + R_coeffs.BB;
+	return R_value;
+}

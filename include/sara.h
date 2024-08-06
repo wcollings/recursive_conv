@@ -27,6 +27,15 @@ struct Solver_t {
 	void (*cb)(struct Solver_t *); /* A callback function (optional) for printing intermediate results etc.*/
 };
 
+struct R_coeffs {
+	prec_t AA;
+	prec_t BB;
+	prec_t CC;
+	prec_t s0;
+};
+
+struct R_coeffs * R_coeffs_init(prec_t AA, prec_t BB, prec_t CC, prec_t s0);
+
 float * q1(float,float);
 float * q2(float,float);
 float * q3(float,float);
@@ -61,5 +70,7 @@ void step(struct Solver_t * SOLV, prec_t inpt, float curr_t);
  *  - voltage across part
 */
 prec_t result(int argc, prec_t *argv);
+
+prec_t R_calculation(struct R_coeffs);
 
 #endif
