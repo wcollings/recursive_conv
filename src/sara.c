@@ -210,6 +210,7 @@ struct R_coeffs * R_coeffs_init(prec_t AA, prec_t BB, prec_t CC, prec_t s0) {
 }
 
 void R_calculation(struct R_coeffs R_coeffs, prec_t x0) {
-	prec_t R_value = (R_coeffs.AA * x0 / exp(R_coeffs.CC * R_coeffs.s0)) + R_coeffs.BB;
-	return R_value;
+	prec_t term_1 = (R_coeffs.AA * x0 / exp(R_coeffs.CC * R_coeffs.s0)); // not being used right now
+	prec_t term_2 = R_coeffs.BB * x0;
+	return term_2;
 }
