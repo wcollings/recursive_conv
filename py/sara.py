@@ -62,8 +62,13 @@ def zeta(i,delta_n):
 def Phi(i,delta_n):
 	return exp(s[i]*delta_n)
 def q1(a:int,i:int,delta_n:float):
-	return 0.
+	if delta_n==0:
+		return 0
+	zi=zeta(i,delta_n)
+	phi=Phi(i,delta_n)
+	return (delta_n/zi)*(1-phi)
 def q2(a:int,i:int,delta_n:float) -> float:
+	assert a%2==a
 	phi = Phi(i,delta_n)
 	if delta_n==0:
 		return 0
@@ -72,9 +77,28 @@ def q2(a:int,i:int,delta_n:float) -> float:
 	q1=(delta_n/zi**2)*(1-(1+zi)*phi)
 	return (q0,q1)[a]
 def q3(a:int,i:int,delta_n:float) -> float:
-	return 0.
+	assert a%3==a
+	if delta_n==0:
+		return 0
+	zi=zeta(i,delta_n)
+	phi=Phi(i,delta_n)
+	q0=(delta_n/2/zi**3)*(2-3*zi+2*zi**2-(2-zi)*phi)
+	q1=(delta_n/zi**3)*(-2*(1-zi)+(2-zi**2)*phi)
+	q2=(delta_n/2/zi**3)*(2-zi+2*zi**2-(2+zi)*phi)
+	return (q0,q1,q2)[a]
+
 def q4(a:int,i:int,delta_n:float) -> float:
-	return 0.
+	assert (a%4==a)
+	if delta_n==0:
+		return 0
+	zi=zeta(i,delta_n)
+	phi=Phi(i,delta_n)
+	q0=(delta_n/6/zi**4)*(-6*zi+7*zi**2-6*(1-zi)**3+(6-6*zi+2*zi**2)*phi)
+	q1=(delta_n/2/zi**4)*(6-10*zi+6*zi**2-(3+(3-2*zi)*(1-zi**2))*phi)
+	q2=(delta_n/2/zi**4)*(-6+8*zi-3*zi**2+(6-2*zi-2*zi**2)*phi)
+	q3=(delta_n/2/zi**4)*(6-6*zi+2*zi**2-(6-zi**2)*phi)
+	return (q0,q1,q2,q3)[a]
+
 def enqueue(val,lis):
 	return [val] + lis[:-1]
 
@@ -96,8 +120,6 @@ def step(solv:Solver,t:float,v:float):
 	y=solv.idxs.index('y')
 	solv.prev_values[y]=enqueue(final_val,solv.prev_values[y])
 	return final_val
-	
-
 
 if __name__=="__main__":
 	K=[0.9478,0.0577]
