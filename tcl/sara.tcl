@@ -31,17 +31,37 @@ proc SARA:Init {instance args} {
 
 	 set solver(num_iter) 0
 	 set solver(prev_time) 0
-	 set solver(tt) {}
-	 set solver(xx) {}
-	 set solver(yy) {}
+	 set solver(tt) {}   //this should be a list
+	 set solver(xx) {}   //this should be a list
+	 set solver(yy) {}   //this should be a multidimentional list
 }
 
+proc SARA:Phi {i n} {
+	expr {exp($i*$n)}
+}
+
+proc SARA:zeta {i n} {
+	expr {-$i*$n}
+}
 
 proc SARA:Step {instance t x} {
     global SARA
 	 global solver
 
-    return $output
+	 set order $SARA($instance,order)
+	 set final 0
+	 set delta_n [expr {t-$solver(prev_time)}]
+	 for {set i 0} {$i < $order} {incr i} {
+		 set sigma $SARA($instance,"q$i")
+		 set a $SARA($instance, "p$i")
+		 set temp [expr {$solver(yy,i,0)*[SARA:Phi $sigma delta_n]}]
+		 for {set j 0} {$j < $order} {incr j} {
+			 set q [qq sigma delta_n]
+			 set temp [expr {$temp + $a*$q*$solver(xx,$j)}]
+		 }
+		 set final [expr {$final + $temp}]
+	 }
+    return $final
 }
 
 
