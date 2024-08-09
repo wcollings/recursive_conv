@@ -14,6 +14,9 @@
 //TODO: translate Step, Accept, and the q functions (+zeta and phi)
 //TODO: do we need to do something different if the coefficients are
 //      complex numbers? How do we deal with that?
+
+package require qcomplex
+
 proc SARA:Init {instance args} {
     global SARA
 	 global solver
@@ -43,6 +46,46 @@ proc SARA:Phi {i n} {
 proc SARA:zeta {i n} {
 	expr {-$i*$n}
 }
+
+proc SARA:q0 {sigma_i delta_n n} {
+	expr {[$delta_n/[zeta $sigma_i $delta_n]]*[1-[Phi $sigma_i $delta_n]]}
+}
+
+proc SARA:q1 {sigma_i delta_n n} {
+	set phi [expr {Phi $sigma_i $delta_n}]
+	set zi [expr {zeta $sigma_i $delta_n}]
+	if {$delta_n==0} {
+		return 0;
+	}
+	else switch $n {
+		0 	{
+			return [expr {$delta_n/[qcomplex::pow $zi 2]*[-1+$zi+$phi]}]			;# supposed to be cpow
+			}
+		1	{
+			return [expr {$delta_n/[qcomplex::pow $zi 2]*[1-[1+$zi]*$phi]}] 		;# supposed to be cpow
+			}
+	}
+}
+
+proc SARA:q2 {sigma_i delta_n n} {
+	set phi [expr {Phi $sigma_i $delta_n}]
+	set zi [expr {zeta $sigma_i $delta_n}]
+	if {$zi==0} {
+		return 0;
+	}
+	else switch $n {
+		0 	{
+			return [expr {$delta_n/[2 * pow $zi 3]*[2-[3*$zi]+[2*pow $zi 2] - [2-$zi]*$phi]}]
+			}
+		1	{
+			return [expr {$delta_n/[pow $zi 3]*[-2*[1-$zi]+[2-pow $zi 2]*$phi]}]
+			}
+		2	{
+			return [expr {$delta_n/[2*pow $zi 3]*[2-$zi-[2+$zi]*$phi]}]
+			}
+	}
+}
+
 
 proc SARA:Step {instance t x} {
     global SARA
