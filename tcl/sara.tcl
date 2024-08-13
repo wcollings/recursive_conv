@@ -16,30 +16,44 @@
 
 package require qcomplex
 
-proc SARA:Init {instance args} {
+proc SARA:Init {instance order p0 p1 p2 p3 q0 q1 q2 q3} {
     global SARA
 	 global solver
     
-    set SARA($instance,order) 3
-    set SARA($instance,p0) 1.2
-    set SARA($instance,p1) -2
-    set SARA($instance,p2) 1.255
-    set SARA($instance,p3) 1
+    #set SARA($instance,order) 3
+    #set SARA($instance,p0) 1.2
+    #set SARA($instance,p1) -2
+    #set SARA($instance,p2) 1.255
+    #set SARA($instance,p3) 1
 
-    set SARA($instance,q0) 1.2
-    set SARA($instance,q1) -2
-    set SARA($instance,q2) 1.255
-    set SARA($instance,q3) 1
-set solver("num_iter") 0
-	 set solver("prev_time") 0
-	 set solver("tt") {{0 0 0 0}}   
-	 set solver("xx") {{0 0 0 0}}
-	 set solver("yy","out") [list 0 0 0 0 0 0 0 0 0]
-	 set solver("yy","out") [list 0 0 0 0 0 0 0 0 0]
-	 for {set i 0} {$i < $order} {incr i} {
-		 lappend solver("yy")
-	 }
-	 set solver(yy) {{0 0 0 0}}
+    #set SARA($instance,q0) 1.2
+    #set SARA($instance,q1) -2
+    #set SARA($instance,q2) 1.255
+    #set SARA($instance,q3) 1
+
+	dict set SARA $instance {
+		order $order
+		p0 $p0
+		p1 $p1
+		p2 $p2
+		p3 $p3
+
+		q0 $q0
+		q1 $q1
+		q2 $q2
+		q3 $q3
+	}
+	
+	dict set solver num_iter 0
+	dict set solver prev_time 0
+	dict set solver tt {{0 0 0 0}}   
+	dict set solver xx {{0 0 0 0}}
+	dict set solver yy {
+		0 [list 0 0 0 0]
+		1 [list 0 0 0 0]
+		2 [list 0 0 0 0]
+		3 [list 0 0 0 0]	
+	}
 }
 
 proc SARA:Phi {i n} {
@@ -103,7 +117,7 @@ proc SARA:Step {instance t x} {
 		 set temp [expr {[lindex $solver(yy) i 0]*[SARA:Phi $sigma delta_n]}]
 		 for {set j 0} {$j < $order} {incr j} {
 			 set q [qq sigma delta_n]
-			 set temp [expr {$temp + $a*$q*[lindex $solver("xx") $j}]
+			 set temp [expr {$temp + $a*$q*[lindex $solver("xx") $j]}]
 		 }
 		 incr final $temp
 	 }
@@ -116,16 +130,16 @@ proc SARA:Accept {instance time input output} {
     global SARA
 	 global solver
 
-	 set order $SARA($instance,order)
+	 set order [dict get SARA instance order]
 	 set final 0
-	 set delta_n [expr {t-$solver(prev_time)}]
+	 set delta_n [expr {time - [dict get solver prev_time]}]
 	 for {set i 0} {$i < $order} {incr i} {
-		 set sigma $SARA($instance,"q$i")
-		 set a $SARA($instance, "p$i")
-		 set temp [expr {[lindex $solver(yy) i 0]*[SARA:Phi $sigma delta_n]}]
+		 set sigma [dict get SARA instance "q$i"]
+		 set a [dict get SARA instance "p$i"]
+		 set temp [expr {[lindex [dict get solver "yy$i"] 0]*[SARA:Phi $sigma delta_n]}]
 		 for {set j 0} {$j < $order} {incr j} {
 			 set q [qq sigma delta_n]
-			 set temp [expr {$temp + $a*$q*[lindex $solver("xx") $j}]
+			 set temp [expr {$temp + $a*$q*[lindex [dict get solver xx] $j]}]
 		 }
 		 incr final $temp
 	 }
