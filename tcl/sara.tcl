@@ -16,7 +16,7 @@
 
 package require qcomplex
 
-proc SARA:Init {instance order p0 p1 p2 p3 q0 q1 q2 q3} {
+proc SARA:Init {instance order k0 k0j p0 p0j p1 p1j p2 p2j p3 p3j q0 q0j q1 q1j q2 q2j q3 q3j} {
     global SARA
 	 global solver
     
@@ -33,15 +33,16 @@ proc SARA:Init {instance order p0 p1 p2 p3 q0 q1 q2 q3} {
 
 	dict set SARA $instance {
 		order $order
-		p0 $p0
-		p1 $p1
-		p2 $p2
-		p3 $p3
+		k0 [qcomplex::complex $k0 $k0j]
+		p0 [qcomplex::complex $p0 $p0j]
+		p1 [qcomplex::complex $p1 $p1j]
+		p2 [qcomplex::complex $p2 $p2j]
+		p3 [qcomplex::complex $p3 $p3j]
 
-		q0 $q0
-		q1 $q1
-		q2 $q2
-		q3 $q3
+		q0 [qcomplex::complex $q0 $q0j]
+		q1 [qcomplex::complex $q1 $q1j]
+		q2 [qcomplex::complex $q2 $q2j]
+		q3 [qcomplex::complex $q3 $q3j]
 	}
 	
 	dict set solver num_iter 0
@@ -103,7 +104,6 @@ proc SARA:q2 {sigma_i delta_n n} {
 
 proc SARA:Step {instance t x} {
     global SARA
-    global SARA
 	 global solver
 
 	 set tempList [list 0 0 0]
@@ -137,7 +137,6 @@ proc SARA:Step {instance t x} {
 
 # TODO: make this save the results
 proc SARA:Accept {instance time input output} {
-    global SARA
     global SARA
 	 global solver
 
