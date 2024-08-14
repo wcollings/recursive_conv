@@ -103,21 +103,35 @@ proc SARA:q2 {sigma_i delta_n n} {
 
 proc SARA:Step {instance t x} {
     global SARA
+    global SARA
 	 global solver
 
-	 set order $SARA($instance,order)
+	 set tempList [list 0 0 0]
+	 set xx_Curr 0
+	 set order [dict get $SARA $instance order]
 	 set final 0
-	 set delta_n [expr {t-$solver(prev_time)}]
+	 set delta_n [expr {$time - [dict get $solver prev_time]}]
 	 for {set i 0} {$i < $order} {incr i} {
-		 set sigma $SARA($instance,"q$i")
-		 set a $SARA($instance, "p$i")
-		 set temp [expr {[lindex $solver(yy) i 0]*[SARA:Phi $sigma delta_n]}]
-		 for {set j 0} {$j < $order} {incr j} {
-			 set q [qq sigma delta_n]
-			 set temp [expr {$temp + $a*$q*[lindex $solver("xx") $j]}]
+		 set sigma [dict get $SARA $instance "q$i"]
+		 set a [dict get $SARA $instance "p$i"]
+		 set temp [expr {[lindex [dict get $solver "yy"] $i]*[SARA:Phi $sigma delta_n]}]
+		 set xx_Curr [expr {[lindex [dict get $solver xx] 0]+[time - [lindex [dict get $solver tt] 0]]*[$input - [dict get $solver xx_Prev]]}]
+		 set q [[q0] $sigma $delta_n 0]
+		 incr temp [expr{$a*$q*$xx_Curr}] 
+		 for {set j 0} {$j < [$order - 1]} {incr j} {
+			 set q [[q[expr{$j+1}]] $sigma $delta_n [expr{$j+1}]]
+			 set temp [expr {$temp + $a*$q*[lindex [dict get $solver xx] $j]}]
 		 }
+		 set tempList [lrange [dict get $solver xx] 0 2]
+		 dict set $solver xx [concat xx_Curr tempList]
+		 set tempList [lrange [dict get $solver tt] 0 2]
+		 dict set $solver tt [concat time tempList]
+		 dict set $solver xx_Prev [$input]
+		 dict set $solver yy $i [$temp]
 		 incr final $temp
+
 	 }
+
     return $final
 }
 
