@@ -7,13 +7,9 @@
 # instead, there's a function at the bottom called "accept"
 # that actually saves that result.
 
-# TODO: figure out how to initialize arrays, including multidimentional ones
-# TODO: what args does Init need? It may be a fair number, for instance
-#      the entirety of the pade approximant coefficients and the order
 # TODO: translate Step, Accept, and the q functions (+zeta and phi)
-# TODO: do we need to do something different if the coefficients are
-#      complex numbers? How do we deal with that?
 
+interp alias {} ? {} set errorInfo
 package require math::complexnumbers
 namespace import ::math::complexnumbers::*
 
@@ -26,15 +22,17 @@ proc SARA:Init {instance k0 k0j p0 p0j p1 p1j p2 p2j p3 p3j q0 q0j q1 q1j q2 q2j
 	}
 	set order 3
 	while {$i < 4} {
-		set realpart q$i
+		set realpart_name q$i
 		set imagpart_name [join [list "q" $i "j"] ""]
+		upvar 0 $realpart_name realpart
 		upvar 0 $imagpart_name imagpart
 		if {$realpart == 0 && $imagpart == 0} {
-			set order [$i - 1]
+			set order [- $i 1]
 			break
 		}
 		incr i
 	}
+	puts "Found order: $order"
 
 	set SARA($instance,"order") $order
 	set SARA($instance,"k0") [complex $k0 $k0j]
@@ -57,11 +55,13 @@ proc SARA:Init {instance k0 k0j p0 p0j p1 p1j p2 p2j p3 p3j q0 q0j q1 q1j q2 q2j
 }
 
 proc SARA:Phi {i n} {
-	expr {exp($i*$n)}
+	exp [* $i $n]
+	# expr {exp($i*$n)}
 }
 
 proc SARA:zeta {i n} {
-	expr {-$i*$n}
+	- [* $i $n]
+	# expr {-$i*$n}
 }
 
 proc SARA:q0 {sigma_i delta_n n} {
@@ -69,18 +69,24 @@ proc SARA:q0 {sigma_i delta_n n} {
 }
 
 proc SARA:q1 {sigma_i delta_n n} {
-	set phi [expr {Phi $sigma_i $delta_n}]
-	set zi [expr {zeta $sigma_i $delta_n}]
+	set phi [SARA:Phi $sigma_i $delta_n]
+	set zi [SARA:zeta $sigma_i $delta_n]
 	if {$delta_n==0} {
 		return 0;
-	}
-	else switch $n {
+	} else {
+		set c1 [complex 1 0]
+		set c1n [complex -1 0] 
+		set c2 [complex 2 0]
+		switch $n {
 		0 	{
-			return [expr {$delta_n/[qcomplex::pow $zi 2]*[-1+$zi+$phi]}]			;# supposed to be cpow
+				return [* [/ $delta_n [pow $zi $c2]] [+ $c1n [+ $zi $phi]]]
+			# return [expr {$delta_n/[pow $zi 2]*[-1+$zi+$phi]}]			;# supposed to be cpow
 			}
 		1	{
-			return [expr {$delta_n/[qcomplex::pow $zi 2]*[1-[1+$zi]*$phi]}] 		;# supposed to be cpow
+				return [* [/ $delta_n [pow $zi $c2]] [* [- $c1 [+ $c1 $zi]] $phi]]
+			# return [expr {$delta_n/[pow $zi 2]*[1-[1+$zi]*$phi]}] 		;# supposed to be cpow
 			}
+		}
 	}
 }
 
@@ -103,77 +109,73 @@ proc SARA:q2 {sigma_i delta_n n} {
 	}
 }
 
-
 proc SARA:Step {instance time input}   {   
 	global SARA
 	global solver
-
-	puts [lindex $solver($instance,"tt") 0]
-	set delta_n [expr {$time - [lindex $solver($instance,"tt") 0]}]
-	set currx [expr {[lindex $solver($instance,xx) 0]+[$delta_n]*[$input - $solver($instace,xx_Prev)]}]
-	puts $currx
-	set tempList [list 0 0 0]
-	set order $SARA($instance,order)
-	set final [expr {$SARA($instance,"k0")*$currx}]
-	
-	for {set i 0} {$i < $order} {incr i} {
-		set sigma $SARA($instance,"q$i")
-		set a $SARA($instance,"p$i")
-		set temp [expr {[lindex $solver($instance,yy) $i]*[SARA:Phi $sigma $delta_n]}]
-		set qq "SARA:q$order"
-		
-		set q [qq $sigma $delta_n 0]
-		incr temp [expr{$a*$q*$xx_Curr}] 
-		for {set j 0} {$j < [$order - 1]} {incr j} {
-			set q [qq $sigma $delta_n [expr{$j+1}]]
-			set temp [expr {$temp + $a*$q*[lindex $solver($instance,xx) $j]}]
-		}
-		set $solver($instance,yy,$i) [$temp]
-		incr final $temp
-	 }
-		 set tempList [lrange [dict get $solver xx] 0 2]
-		 set $solver($instance,xx) [concat $xx_Curr tempList]
-		 set tempList [lrange [dict get $solver tt] 0 2]
-		 set $solver($instance,tt) [concat $time tempList]
-		 set $solver($instance,xx_Prev) [$input]
-
-	return $final
-
-}
-
-proc SARA:Accept {instance time input} {
-	global SARA
-	global solver
 	set time [complex $time 0]
-	puts [lindex $solver($instance,"tt") 0]
+	set input [complex $input 0]
 
-	set delta_n [expr {$time - [lindex $solver($instance,"tt") 0]}]
-	set currx [complex [expr {[lindex $solver($instance,"xx") 0]+$delta_n*($input - $solver($instance,"xx_Prev"))}] 0]
-	set tempList [list 0 0 0]
+	set delta_n [- $time  [lindex $solver($instance,"tt") 0]]
+	set currx [+ [lindex $solver($instance,"xx") 0] [* $delta_n [- $input $solver($instance,"xx_Prev")]]]
+
 	set order $SARA($instance,"order")
-	puts $SARA($instance,"k0")
 	set final [* $SARA($instance,"k0") $currx]
 	
 	for {set i 0} {$i < $order} {incr i} {
 		set sigma $SARA($instance,"q$i")
 		set a $SARA($instance,"p$i")
 		set temp [* [lindex $solver($instance,"yy") $i] [SARA:Phi $sigma $delta_n]]
-		set qq q$order
+		set qq "SARA:q$order"
 		
-		set q [qq $sigma $delta_n 0]
-		incr temp [* $a $q $currx] 
-		for {set j 0} {$j < [$order - 1]} {incr j} {
+		set q [$qq $sigma $delta_n 0]
+		set temp [+ $temp [* $a [* $q $currx]]]
+		for {set j 0} {$j < [- $order 1]} {incr j} {
 			set q [qq $sigma $delta_n [expr{$j+1}]]
-			set temp [expr {$temp + $a*$q*[lindex $solver($instance,xx) $j]}]
+			set temp [+ $temp [* $a [* $q [lindex $solver($instance,"xx") $j]]]]
 		}
-		set $solver($instance,yy,$i) [$temp]
-		incr final $temp
+		set $solver($instance,"yy") [lreplace $solver($instance,"yy") $i $i $temp]
+		set final [+ $final $temp]
+	}
+	return [real $final]
+}
 
-	 }
-	set tempList [lrange $solver($instance,xx) 0 2]
+proc SARA:Accept {instance time input} {
+	global SARA
+	global solver
+	set time [complex $time 0]
+	set input [complex $input 0]
+
+	set delta_n [- $time  [lindex $solver($instance,"tt") 0]]
+	set currx [+ [lindex $solver($instance,"xx") 0] [* $delta_n [- $input $solver($instance,"xx_Prev")]]]
+
+	set tempList [list 0 0 0]
+	set order $SARA($instance,"order")
+	set final [* $SARA($instance,"k0") $currx]
+	
+	for {set i 0} {$i <= $order} {incr i} {
+		set sigma $SARA($instance,"q$i")
+		set a $SARA($instance,"p$i")
+		set temp [* [lindex $solver($instance,"yy") $i] [SARA:Phi $sigma $delta_n]]
+		set qq "SARA:q$order"
+		
+		set q [$qq $sigma $delta_n 0]
+		set temp [+ $temp [* $a [* $q $currx]]]
+		for {set j 0} {$j < [- $order 1]} {incr j} {
+			set q [qq $sigma $delta_n [expr{$j+1}]]
+			set temp [+ $temp [* $a [* $q [lindex $solver($instance,"xx") $j]]]]
+		}
+		set solver($instance,"yy") [lreplace $solver($instance,"yy") $i $i $temp]
+		set final [+ $final $temp]
+	}
+	set tempList [lrange $solver($instance,"xx") 0 2]
 	set solver($instance,xx) [concat xx_Curr tempList]
-	set tempList [lrange $solver($instance,tt) 0 2]
+	set tempList [lrange $solver($instance,"tt") 0 2]
 	set solver($instance,tt) [concat time tempList]
 	set solver($instance,xx_Prev) $input
 	set solver($instance,yy_Final) $final
 }
+
+SARA:Init "inst" 279695688.23288864 0 -740340728373193.2 152205548356904.16 -740340728373193.2 -152205548356904.16 0 0 0 0 -2923683.340113021 3792673.1864589 -2923683.340113021 -3792673.1864589 0 0 0 0 
+SARA:Accept "inst" 1e-8 2
+puts "[SARA:Step "inst" 2e-8 2]"
+parray solver

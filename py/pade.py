@@ -5,7 +5,7 @@ from numpy import linspace, ones,zeros,chararray,array,logspace,ndarray,vectoriz
 import numpy as np
 from numpy.linalg import solve
 from math import log10,ceil,exp,atan, factorial as fac
-from si_num import to_si
+from deriv import take_derivs
 from matplotlib import pyplot as plt
 
 class Pade:
@@ -174,17 +174,18 @@ def sample_matrix(M,N):
 		print(y[r].decode())
 
 def L(f):
-	a=1e-9
-	b=2.8e-9
-	c=800e-9
-	f0=2e4
+	a=21.81e-9
+	b=25.35e-9
+	c=4.01e-7
+	f0=374.06e3
 	res=(0.6366*a)*atan(-c*(f-f0))+b;
-	return res
+	return 1/res
 def solve_system(p:Poly,M:int,N:int) -> Pade:
 	"""
 	Create a Pade approximation, given a Taylor series and the length of the top and bottom polynomials
 	len(p) must equal (M+N+1)
 	"""
+	print(p.coeff)
 	s=p.coeff[::-1]
 	# print("s")
 	# print(s)
@@ -194,11 +195,12 @@ def solve_system(p:Poly,M:int,N:int) -> Pade:
 		for j in range(N):
 			if i+M>=j:
 				lower[i][j]=s[i-j+M]
+		print(f"s[{M}+{i}+1]={s[M+i+1]}")
 		y[i]=-s[M+i+1]
-	print(lower)
-	print(y)
+	# print(lower)
+	# print(y)
 	b=solve(lower,y)
-	print(b)
+	# print(b)
 	y=ones((M+1,1))
 	upper=zeros((M+1,M+1))
 	for i in range(M+1):
@@ -207,8 +209,8 @@ def solve_system(p:Poly,M:int,N:int) -> Pade:
 				upper[i][j]=s[i-j]
 	b_offset=ones((M+1,1))
 	b_offset[1:]=b[:M]
-	print()
-	print(upper)
+	# print()
+	# print(upper)
 	a=upper@b_offset
 	a=list(map(float,a.flatten()))
 	b=[1]+list(map(float,b.flatten()))
@@ -232,7 +234,7 @@ def get_err(rep,plot=False):
 		plt.semilogx(xs,sig,label="actual")
 		for n,i in enumerate(approx):
 			plt.semilogx(xs,i,label=f"approx #{n}")
-		plt.ylim((1.78e-9,3e-9))
+		# plt.ylim((1.4e-9,4.55e-9))
 		plt.legend()
 		plt.show()
 	# return sum(err)
@@ -248,6 +250,7 @@ def separate(rep:Pade):
 		K.append(rep.num(r)/temp(r))
 	# print(K)
 	out=Pade(Poly(K),roots) #pyright:ignore
+	out.k0=rep.k0
 	out.sep=True
 	return out
 
@@ -258,11 +261,16 @@ def twopt(rep,start):
 	return inner
 
 if __name__=="__main__":
-	derivs=list(map(float,open("L_deriv.csv").readline().split(",")))
-	poly=Poly(derivs[::-1]).recenter(2e5)
+	x0=1e6
+	x1=1e9
+	l=lambda s:L(s)-L(x1)
+	derivs=take_derivs(l,x0,3,40)
+	# p1=Poly(derivs[::-1]).recenter(x0)
+	# derivs=list(map(float,open("L_deriv.csv").readline().split(",")))[:4]
+	poly=Poly(derivs[::-1]).recenter(x0)
+	# print(poly)
 	p=solve_system(poly,1,2)
-	p.k0=L(1e8)
-	print(p)
-	get_err([poly,p],True)
-
-	# get_err([p,separate(p)],True)
+	p.k0=L(x1)
+	s=separate(p)
+	print(s)
+	# get_err([p,s],True)

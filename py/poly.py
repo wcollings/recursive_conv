@@ -63,7 +63,7 @@ class Poly:
 				loc = sumup(N-j-1)+(i-j)
 				bn = self.coeff[j]
 				temp=tri[loc]*bn*pow(c,i-j)
-				print(tri[loc])
+				# print(tri[loc])
 				term += temp
 			dst[i] = term
 		self.coeff=dst

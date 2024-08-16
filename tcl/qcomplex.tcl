@@ -9,6 +9,7 @@
 #    the inverse trigonometric functions and the hyperbolic functions
 #
 
+package provide complex
 namespace eval ::math::complexnumbers {
     namespace export + - / * conj exp sin cos tan real imag mod arg log pow sqrt tostring
 }

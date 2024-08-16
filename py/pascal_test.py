@@ -13,7 +13,7 @@ def print_arr(arr,arrows):
 	
 def pascal(row):
 	ne = sumup(row+1)
-	print(ne)
+	# print(ne)
 	tri = [0]*ne
 	col=0
 	for i in range(ne):
