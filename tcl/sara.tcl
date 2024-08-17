@@ -118,9 +118,8 @@ proc SARA:Step {instance time input}   {
 	set time [complex $time 0]
 	set input [complex $input 0]
 
-	set delta_n [- $time  [lindex $solver($instance,"tt") 0]]
+	set delta_n [- $time  $solver($instance,"prev_time")]
 	set integ [* $delta_n $input]
-	puts "S vdt = $integ"
 	set currx [+ [lindex $solver($instance,"xx") 0] $integ ]
 
 	set order $SARA($instance,"order")
@@ -131,7 +130,6 @@ proc SARA:Step {instance time input}   {
 		set a $SARA($instance,"p$i")
 		set temp [* [lindex $solver($instance,"yy") $i] [SARA:Phi $sigma $delta_n]]
 		set qq "SARA:q$order"
-		
 		set q [$qq $sigma $delta_n 0]
 		set temp [+ $temp [* $a [* $q $currx]]]
 		for {set j 0} {$j < [- $order 1]} {incr j} {
@@ -165,20 +163,6 @@ proc SARA:Accept {instance time input} {
 	set solver($instance,"tt") $tempList
 	set solver($instance,"prev_time") $time
 
-	puts -nonewline $fp "[real $currx],"
-	set expected [sin $time]
-	if { [abs [real [- $currx $expected]]] > 1 } {
-		puts "Error!"
-		puts "Calculated integral: $currx"
-		puts "Expected value: $expected"
-		puts "(v=$input)"
-		puts "most recent partial integral: $integ"
-		puts "delta_n = $delta_n"
-		parray solver
-		exit
-	}
-
-	set tempList [list 0 0 0]
 	set final [* $SARA($instance,"k0") $currx]
 	
 	for {set i 0} {$i <= $order} {incr i} {
@@ -200,21 +184,16 @@ proc SARA:Accept {instance time input} {
 	set solver($instance,"xx_Prev") $input
 	set solver($instance,"yy_Final") $final
 	puts $fp [real $final]
-	return $final
 }
 
 SARA:Init "inst" 0 0 947766.7355944953 0 52233.26440550487 0 0 0 0 0 -2104987.5621120883 0 -95012.43788791099 0 0 0 0 0 
 # SARA:Init "inst" 279695688.23288864 0 -740340728373193.2 152205548356904.16 -740340728373193.2 -152205548356904.16 0 0 0 0 -2923683.340113021 3792673.1864589 -2923683.340113021 -3792673.1864589 0 0 0 0 
-set fp [open "output.csv" "w"]
-puts $fp "t,v,dv,y1,y2,out"
 set pi 3.14
 set step [expr {$pi/1e3}]
 for {set t 0} {$t < $pi} {set t [expr {$t+$step}]} {
 	# set t [expr {$i+$step}]
 	# set t [expr {$i*$step}]
 	set v [real [cos [complex $t 0]]]
-	puts -nonewline $fp "$t,$v,"
 	real [SARA:Accept "inst" $t $v]
 	# puts $fp "$t,$v,[real [SARA:Accept "inst" $t $v]]"
 }
-close $fp
