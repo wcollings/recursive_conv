@@ -4,7 +4,7 @@ Usage:
 	Call function `sara` at each time step, passing in the current sim time and the list of new state space variables it needs
 	That in turn calls the specific solver method for each equation
 """
-from math import exp
+from math import exp, sin
 from pade import Pade,separate
 from poly import Poly
 from matplotlib import pyplot as plt
@@ -44,6 +44,15 @@ class Solver:
 			{len(self.prev_values[1])} y1's
 			"""
 		return s
+	def update(self,t,x):
+		x_idx = self.idxs.index('x')
+		prev_x = self.prev_values[x_idx][0]
+		delta_t = t-self.prev_time
+		new_x = prev_x + (delta_t*x)
+		self.prev_values[x_idx] = [new_x] + self.prev_values[x_idx]
+		self.prev_delta_ts=[delta_t] + self.prev_delta_ts
+		self.prev_time = t
+
 
 def test_sep():
 	n=Poly([5,1])
@@ -62,13 +71,8 @@ def zeta(i,delta_n):
 def Phi(i,delta_n):
 	return exp(s[i]*delta_n)
 def q1(a:int,i:int,delta_n:float):
-	if delta_n==0:
-		return 0
-	zi=zeta(i,delta_n)
-	phi=Phi(i,delta_n)
-	return (delta_n/zi)*(1-phi)
+	return 0.
 def q2(a:int,i:int,delta_n:float) -> float:
-	assert a%2==a
 	phi = Phi(i,delta_n)
 	if delta_n==0:
 		return 0
@@ -77,37 +81,16 @@ def q2(a:int,i:int,delta_n:float) -> float:
 	q1=(delta_n/zi**2)*(1-(1+zi)*phi)
 	return (q0,q1)[a]
 def q3(a:int,i:int,delta_n:float) -> float:
-	assert a%3==a
-	if delta_n==0:
-		return 0
-	zi=zeta(i,delta_n)
-	phi=Phi(i,delta_n)
-	q0=(delta_n/2/zi**3)*(2-3*zi+2*zi**2-(2-zi)*phi)
-	q1=(delta_n/zi**3)*(-2*(1-zi)+(2-zi**2)*phi)
-	q2=(delta_n/2/zi**3)*(2-zi+2*zi**2-(2+zi)*phi)
-	return (q0,q1,q2)[a]
-
+	return 0.
 def q4(a:int,i:int,delta_n:float) -> float:
-	assert (a%4==a)
-	if delta_n==0:
-		return 0
-	zi=zeta(i,delta_n)
-	phi=Phi(i,delta_n)
-	q0=(delta_n/6/zi**4)*(-6*zi+7*zi**2-6*(1-zi)**3+(6-6*zi+2*zi**2)*phi)
-	q1=(delta_n/2/zi**4)*(6-10*zi+6*zi**2-(3+(3-2*zi)*(1-zi**2))*phi)
-	q2=(delta_n/2/zi**4)*(-6+8*zi-3*zi**2+(6-2*zi-2*zi**2)*phi)
-	q3=(delta_n/2/zi**4)*(6-6*zi+2*zi**2-(6-zi**2)*phi)
-	return (q0,q1,q2,q3)[a]
-
+	return 0.
 def enqueue(val,lis):
 	return [val] + lis[:-1]
 
 def step(solv:Solver,t:float,v:float):
 	solv.num_iter+=1
 	x=solv.idxs.index('x')
-	solv.prev_values[x]=enqueue(v,solv.prev_values[x])
-	solv.prev_delta_ts=enqueue(t-solv.prev_time,solv.prev_delta_ts)
-	solv.prev_time=t
+	solv.update(t,v)
 	dt=solv.prev_delta_ts
 	final_val:float=0
 	for i in range(len(K)):
@@ -120,24 +103,34 @@ def step(solv:Solver,t:float,v:float):
 	y=solv.idxs.index('y')
 	solv.prev_values[y]=enqueue(final_val,solv.prev_values[y])
 	return final_val
+	
+
 
 if __name__=="__main__":
 	K=[0.9478,0.0577]
+	Kinv = [1/k for k in K]
 	s=[-2.105,-0.095]
-	solv=Solver(K,s)
+	sinv = [-_s for _s in s]
+	solv=Solver(Kinv,sinv)
 	i=0
 	times=[]
 	while i<40:
 		i+=uniform(1e-5,1e-4)
 		times.append(i)
-	times=np.arange(0,40,1)
+	times=np.arange(0,40,1e-2)
 	outputs=[]
+	inputs=[]
 	for i in times:
-		outputs.append(step(solv,i,1))
-		print(f"{i},{outputs[-1]}")
-	ex = np.loadtxt("sara_example.csv",dtype=float,delimiter=',')
-	c = np.loadtxt("results.csv",dtype=float,delimiter=',')
-	plt.plot(ex[:,0],ex[:,1])
-	plt.plot(c[:,0],c[:,1])
-	plt.plot(times,outputs)
+		v=np.cos(i)
+		inputs.append(v)
+		outputs.append(step(solv,i,v))
+		# print(f"{i},{outputs[-1]}")
+	# ex = np.loadtxt("sara_example.csv",dtype=float,delimiter=',')
+	# c = np.loadtxt("results.csv",dtype=float,delimiter=',')
+	# plt.plot(ex[:,0],ex[:,1])
+	# plt.plot(c[:,0],c[:,1])
+	plt.plot(times,np.cos(times))
+	x_idx = solv.idxs.index('x')
+	int_v = solv.prev_values[x_idx][::-1][5:]
+	plt.plot(times,int_v)
 	plt.show()
