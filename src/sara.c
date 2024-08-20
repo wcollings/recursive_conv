@@ -18,12 +18,10 @@ struct Solver_t * solver_init(int order,struct Pade_t * eq) {
 	self->eqs=eq;
 	self->order=order;
 	self->curr_t=0;
+	self->curr_x=0;
 	self->xx = calloc(sizeof(prec_t),order);
 	self->tt = calloc(sizeof(prec_t),order);
-	self->yy=malloc(sizeof(prec_t*)*(eq->num->num_terms+1));
-	for (int i=0; i < eq->num->num_terms+1; ++i) {
-		self->yy[i]=calloc(sizeof(prec_t),order);
-	}
+	self->yy = calloc(sizeof(prec_t),order+1);
 	switch (order) {
 		case 1: self->qq=q1;
 				  break;
@@ -122,9 +120,11 @@ void shift_c(prec_c_t * arr,int num_ele) {
 }
 
 void step(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
+	prec_t delta_n = (curr_t-SOLV->curr_t);
+	prec_t integ = delta_n * (inpt+SOLV->curr_x)/2;
 	// enqueue the newest input
 	shift(SOLV->xx,SOLV->order);
-	SOLV->xx[0]=inpt;
+	SOLV->xx[0]=integ;
 	shift(SOLV->tt,SOLV->order);
 	SOLV->tt[0]=curr_t-SOLV->curr_t;
 	SOLV->curr_t=curr_t;
@@ -136,19 +136,17 @@ void step(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
 		temp=0;
 		prec_t sigma=SOLV->eqs->denom->terms[i];
 		prec_t a=SOLV->eqs->num->terms[i];
-		temp=SOLV->yy[i][0]*Phi(sigma,SOLV->tt[i]);
+		temp=SOLV->yy[i]*Phi(sigma,SOLV->tt[i]);
 		for (int j=0; j <SOLV->order; ++j) {
 			// calculate the q terms
 			prec_c_t q=SOLV->qq(sigma,delta_n,j);
 			temp+=a*q*SOLV->xx[j];
 		}
-		shift_c(SOLV->yy[i],SOLV->order);
-		SOLV->yy[i][0]=temp;
+		SOLV->yy[i]=temp;
 		final += temp;
 	}
 	int n=SOLV->eqs->num->num_terms;
-	shift_c(SOLV->yy[n],SOLV->order);
-	SOLV->yy[n][0] = final;
+	SOLV->yy[n] = final;
 	if (SOLV->cb != NULL) {
 		(*SOLV->cb)(SOLV);
 	}

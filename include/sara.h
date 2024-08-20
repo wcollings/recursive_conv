@@ -23,10 +23,11 @@ void step_time(struct Time_s * t);
 struct Solver_t {
 	struct Pade_t * eqs;
 	prec_t curr_t; /* The last _actual_ time */
+	prec_t curr_x; /* The last _actual_ value of x */
 	int order;
 	prec_t * tt; /* Past time deltas */
 	prec_t * xx; /* previous input states */
-	prec_c_t ** yy; /* previous output states */
+	prec_c_t * yy; /* previous output states */
 	prec_c_t (*qq)(float,float,int);
 	void (*cb)(struct Solver_t *); /* A callback function (optional) for printing intermediate results etc.*/
 };
