@@ -1,41 +1,107 @@
+from si_num import from_si,to_si
 from typing import Sequence, Iterable
-from ddiff import ddiff
 from poly import Poly,synth_div
-from numpy import linspace, ones,zeros,chararray,array,logspace,ndarray,vectorize
+from numpy import ones,zeros,chararray,array,logspace,ndarray,vectorize
 import numpy as np
 from numpy.linalg import solve
 from math import log10,ceil,exp,atan, factorial as fac
 from deriv import take_derivs
 from matplotlib import pyplot as plt
+from plotting import figure_wrapper
+import pandas as pd
+import cmath
+
+import warnings
+warnings.filterwarnings("ignore")
+class max_monad:
+	val:complex
+	highest:float
+	def __init__(self, val):
+		self.val=val
+		if isinstance(val,complex):
+			val = max(val.real,val.imag)
+		self.highest=val
+	def bind(self,val) -> 'max_monad':
+		orig=val
+		if isinstance(val,complex):
+			val = max(val.real,val.imag)
+		if val > self.highest:
+			return max_monad(orig)
+		return self
+	def __repr__(self):
+		return f"Highest power was: {int(log10(self.highest))} ({self.val:1.2e})"
+
+def complex_str(a:complex|float):
+	ic=lambda a: isinstance(a,complex) and a.imag!=0
+	if ic(a):
+		return f"{a.real:-f} {a.imag:-f} "
+	return f"{a:-f} 0 "
+
+def format_float(f:complex|float) -> str:
+	if isinstance(f,float):
+		rep=f"{f:+1.3e}"
+		man,exp=rep.split("e")
+		if exp.startswith("+"):
+			exp=exp[1:]
+		exp=exp.strip("0")
+		return man+r"\text{e}"+exp
+	real=format_float(f.real)
+	if f.imag>0:
+		sign="+"
+	else:
+		sign="-"
+	imag=sign+"j"+format_float(f.imag)[1:]
+	return real+imag
+
 
 class Pade:
 	num:Poly
 	denom:Poly
 	sep:bool
+	freq_domain:bool
 	k0:float
 	def __init__(self,n:Poly,d:Poly,k0:float=0.):
+		self.freq_domain=True
 		self.num=n
 		self.denom=d
 		self.sep=False
 		self.k0=k0
 	def __call__(self,x:float) -> float:
+		if not self.freq_domain:
+			ret=self.k0*x
+			for K,s in zip(self.num.coeff,self.denom.coeff):
+				this_term = K*cmath.exp(s*x)
+				ret+=this_term
+			return ret
 		if self.sep:
 			ret=self.k0
 			for K,s in zip(self.num.coeff,self.denom.coeff):
-				ret += K/(x-s)
+				this_term=K/(x-s)
+				ret += this_term
+			return ret
+		elif not self.freq_domain:
+			ret=self.k0*x
+			for K,s in zip(self.num.coeff,self.denom.coeff):
+				this_term = K*exp(s*x)
+				ret+=this_term
 			return ret
 		return self.k0 + (self.num(x)/self.denom(x))
 	def __repr__(self):
 		out=''
+		if not self.freq_domain:
+			out=f"r(x) = {self.k0} "
+			for k,s in zip(self.num.coeff,self.denom.coeff):
+				out += f" + ({k})exp({s}t)"
+			return out
 		if self.sep:
-			center="r(x)= " + str(self.k0) + " + "
+			center=f"r(x) = {self.k0:e} " 
 			num = " "*len(center)
 			denom = " "*len(center)
 			temp_n =""
 			temp_d=""
 			for n,d in zip(self.num.coeff,self.denom.coeff):
 				temp_n = f"{n:1.2e}"
-				temp_d = f"(x{d:-1.2e})"
+				temp_d = f"(x{-d:+1.2e})"
 				if len(temp_n) > len(temp_d):
 					center+="+ " + "-"*len(temp_n)
 					num+="  " + temp_n
@@ -49,10 +115,44 @@ class Pade:
 			num=str(self.num)
 			denom=str(self.denom)
 			str_len=max(map(len,[num,denom]))
-			center_len = len("r(x)= " + str(self.k0) + " + ")
-			center="r(x)= " + str(self.k0) + " + " + "-"*len(max(num,denom))+'\n'
+			center=f"r(x) = {self.k0:e} + " 
+			center_len = len(center)
+			center+="-"*len(max(num,denom))+'\n'
 			out=f"{' '*center_len}{num:^{str_len}s}\n"+center+f"{' '*center_len}{denom:^{str_len}s}"
 		return out
+	def get_coeff_str(self)->str:
+		s=complex_str(self.k0)
+		for coeff in self.num.coeff:
+			s+=complex_str(coeff)
+		if len(self.num.coeff) < 4:
+			s+= "0 0 "*(4-len(self.num.coeff))
+		for coeff in self.denom.coeff:
+			s+=complex_str(coeff)
+		if len(self.denom.coeff) < 4:
+			s+= "0 0 "*(4-len(self.denom.coeff))
+		return s
+	def highest_power(self):
+		found=max_monad(self.k0)
+		for k in self.num.coeff:
+			found=found.bind(k)
+		return found
+		# print(f"The highest power I found was {int(log10(found.highest))} ({found.val:1.3e})")
+	def to_latex(self):
+		s="H(s)="
+		if not self.freq_domain:
+			s="h(t)="
+			s+=format_float(self.k0)
+			for n,d in zip(self.num.coeff,self.denom.coeff):
+				s+=r"+("+format_float(n)+r")\exp(("+format_float(-d)+")t)"
+			return s
+		if self.sep:
+			if self.k0:
+				s+=format_float(self.k0)
+			for n,d in zip(self.num.coeff,self.denom.coeff):
+				s+=r"+\frac{"+format_float(n)+r"}{s"+format_float(-d)+"}"
+			return s
+		return ""
+
 
 def pascal(row,invert=True) -> ndarray:
 	if row==1:
@@ -180,12 +280,13 @@ def L(f):
 	f0=374.06e3
 	res=(0.6366*a)*atan(-c*(f-f0))+b;
 	return 1/res
+
 def solve_system(p:Poly,M:int,N:int) -> Pade:
 	"""
 	Create a Pade approximation, given a Taylor series and the length of the top and bottom polynomials
 	len(p) must equal (M+N+1)
 	"""
-	print(p.coeff)
+	# print(p.coeff)
 	s=p.coeff[::-1]
 	# print("s")
 	# print(s)
@@ -195,7 +296,7 @@ def solve_system(p:Poly,M:int,N:int) -> Pade:
 		for j in range(N):
 			if i+M>=j:
 				lower[i][j]=s[i-j+M]
-		print(f"s[{M}+{i}+1]={s[M+i+1]}")
+		# print(f"s[{M}+{i}+1]={s[M+i+1]}")
 		y[i]=-s[M+i+1]
 	# print(lower)
 	# print(y)
@@ -218,37 +319,35 @@ def solve_system(p:Poly,M:int,N:int) -> Pade:
 	# return Pade(Poly(a[::-1]).recenter(-2e6),Poly(b[::-1]).recenter(-2e6))
 
 def get_err(rep,plot=False):
-	xmax=10000
 	xs=logspace(1,9,10000)
 	sig=tuple(map(L,xs))
 	if not isinstance(rep,Iterable):
 		rep=[rep]
-	# sig=tuple(map(lambda x:1/(1+exp(x)),xs))
 	sig=array(sig)
 	approx=[]
+	err=[]
+	saber_overlay=pd.read_csv("lf_matching.csv")
 	for r in rep:
-		# print(r.disc)
+		r.freq_domain=True
+		res = vectorize(r)(xs)
 		approx.append(vectorize(r)(xs))
-		# err=(sig-approx[-1])/sig
+		err.append(np.sum(np.divide(np.abs(res-sig),sig)))
 	if plot:
-		plt.semilogx(xs,sig,label="actual")
-		for n,i in enumerate(approx):
-			plt.semilogx(xs,i,label=f"approx #{n}")
-		# plt.ylim((1.4e-9,4.55e-9))
-		plt.legend()
-		plt.show()
-	# return sum(err)
+		with figure_wrapper(outf="L_compare.png",show=True) as fw:
+			fw.plot2(xs,1/sig,sig,xlab="Frequency (Hz)",ylab1="L(f)",ylab2="1/L(f)",name="Original function")
+			linv = [1/l for l in saber_overlay.l]
+			fw.plot2(saber_overlay.f,saber_overlay.l,linv, name="From Saber")
+			fw.plot2(xs,1/approx[0],approx[0],xlab="Frequency (Hz)",ylab1="L(f)",ylab2="$L^{-1}(f)$",name="Approximation")
+			fw.set_fontsize(15)
+	return err
 
 def separate(rep:Pade):
-	mat = zeros((len(rep.denom)-1,len(rep.denom)-1),dtype=np.complex64)
-	# print(mat)
+	# mat = zeros((len(rep.denom)-1,len(rep.denom)-1),dtype=np.complex64)
 	roots = rep.denom.get_roots()
-	# print(f"The roots of {rep.denom} are:\n {roots}")
 	K=[]
 	for r in roots.coeff:
 		temp = synth_div(rep.denom,r)
 		K.append(rep.num(r)/temp(r))
-	# print(K)
 	out=Pade(Poly(K),roots) #pyright:ignore
 	out.k0=rep.k0
 	out.sep=True
@@ -259,18 +358,69 @@ def twopt(rep,start):
 		return L(start) + rep(x)
 	inner.disc = f"{start} + ({str(rep)})"
 	return inner
+def create_approx(x):
+		x0=x*1e6
+		x1=1e9
+		l=lambda s:L(s)-L(x1)
+		derivs=take_derivs(l,x0,3,40)
+		p1=Poly(derivs[::-1]).recenter(x0)
+		p=solve_system(p1,1,2)
+		# print(p)
+		s=separate(p)
+		# print(s)
+		s.k0=L(x1)
+		s.sep=True
+		return s,p1
+
+def time_domain(rep:Pade):
+	rep.freq_domain=False
+	rep.num.coeff = [n*100 for n in rep.num.coeff]
+	# rep.denom.coeff = [n*100 for n in rep.denom.coeff]
+	print(rep)
+	with open("l_t_latex.txt",'w') as f:
+		f.write(rep.to_latex())
+		f.write("\n")
+		rep.freq_domain = True
+		f.write(rep.to_latex())
+		rep.freq_domain=False
+	ts=np.arange(0,1e-4,1e-8)
+	xs=1/np.vectorize(rep)(ts)
+	ts=ts*1e6
+	xs=xs*1e3
+	with figure_wrapper("L_time_domain.png", show=True) as fw:
+		fw.plot(ts,xs)
+		fw.set_xlim(0,1e2)
+		fw.set_ylim(-6,2.6)
+		fw.set_labels("Time (us)","Inductance (mH)")
+		fw.set_title("Time-Domain Inductance response (100K)")
+		fw.set_fontsize(15)
 
 if __name__=="__main__":
-	x0=1e6
-	x1=1e9
-	l=lambda s:L(s)-L(x1)
-	derivs=take_derivs(l,x0,3,40)
-	# p1=Poly(derivs[::-1]).recenter(x0)
-	# derivs=list(map(float,open("L_deriv.csv").readline().split(",")))[:4]
-	poly=Poly(derivs[::-1]).recenter(x0)
-	# print(poly)
-	p=solve_system(poly,1,2)
-	p.k0=L(x1)
-	s=separate(p)
-	print(s)
-	# get_err([p,s],True)
+	min_err=1e9
+	min_x0=1e9
+	approxs=[]
+	best_approx=Pade(Poly([]),Poly([]))
+	xs = np.linspace(1,12,12)
+	df=pd.DataFrame(0,index=xs,columns=['err','pow'])
+	s,p=create_approx(1)
+	best_approx=s
+	# print(best_approx.to_latex())
+	# s.num.coeff = [k*2 for k in s.num.coeff]
+	test_f = [1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10]
+	fbase=np.linspace(1,10,10)
+	f1=fbase*1e5
+	f2=fbase*1e6
+	fs=f1.tolist() + f2.tolist()
+	ls=tuple(map(lambda s:1/best_approx(s),fs))
+	ls = [1e9/best_approx(f).real for f in fs]
+	pd.DataFrame(data={'f':fs,'l':ls}).to_csv("real_lf.csv")
+	df=pd.DataFrame(0,index=test_f,columns=['L','H','delta'])
+	for freq in test_f:
+		a=1/L(freq)
+		b=1/best_approx(freq).real
+		df.at[freq,'L']=a
+		df.at[freq,'H']=b
+		df.at[freq,'delta']=abs(a-b)/a*100
+	# print(df)
+	time_domain(best_approx)
+	# get_err([best_approx],True)
