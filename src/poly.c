@@ -69,7 +69,7 @@ prec_c_t poly_eval(struct Polynomial_t * a, prec_c_t val) {
 
 void poly_print(struct Polynomial_t * p) {
 	if (p->tp==Vals) {
-		printf("(%+"PRNT_SPEC"%+"PRNT_SPEC"i)x^%d",creal(p->terms[0]),cimag(p->terms[0]),p->num_terms);
+		printf("(%+"PRNT_SPEC"%+"PRNT_SPEC"i)x^%d",creal(p->terms[0]),cimag(p->terms[0]),p->num_terms-1);
 		for (int i=1; i < p->num_terms; ++i) {
 			printf("(%+"PRNT_SPEC"%+"PRNT_SPEC"i)x^%d",creal(p->terms[i]),cimag(p->terms[i]),p->num_terms-i-1);
 		}

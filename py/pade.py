@@ -1,3 +1,4 @@
+from copy import deepcopy
 from si_num import from_si,to_si
 from typing import Sequence, Iterable
 from poly import Poly,synth_div
@@ -72,18 +73,16 @@ class Pade:
 			for K,s in zip(self.num.coeff,self.denom.coeff):
 				this_term = K*cmath.exp(s*x)
 				ret+=this_term
-			return ret
+			assert ret.imag < 1e-14
+			return ret.real
 		if self.sep:
 			ret=self.k0
 			for K,s in zip(self.num.coeff,self.denom.coeff):
-				this_term=K/(x-s)
+				this_term = K/(x-s)
+				# this_term=K/(self.denom.over_coeff*(x-s))
+				# this_term=(K*self.denom.over_coeff)/(x-s)
+				# this_term=(K*self.num.over_coeff)/(self.denom.over_coeff*(x-s))
 				ret += this_term
-			return ret
-		elif not self.freq_domain:
-			ret=self.k0*x
-			for K,s in zip(self.num.coeff,self.denom.coeff):
-				this_term = K*exp(s*x)
-				ret+=this_term
 			return ret
 		return self.k0 + (self.num(x)/self.denom(x))
 	def __repr__(self):
@@ -328,16 +327,22 @@ def get_err(rep,plot=False):
 	err=[]
 	saber_overlay=pd.read_csv("lf_matching.csv")
 	for r in rep:
-		r.freq_domain=True
+		# res = vectorize(r)(xs)
+		# approx.append(res)
+		# err.append(np.sum(np.divide(np.abs(res-sig),sig)))
+		r.num.over_coeff=1/r.num.over_coeff
+		r.denom.over_coeff=1/r.denom.over_coeff
 		res = vectorize(r)(xs)
-		approx.append(vectorize(r)(xs))
+		approx.append(res)
 		err.append(np.sum(np.divide(np.abs(res-sig),sig)))
 	if plot:
 		with figure_wrapper(outf="L_compare.png",show=True) as fw:
 			fw.plot2(xs,1/sig,sig,xlab="Frequency (Hz)",ylab1="L(f)",ylab2="1/L(f)",name="Original function")
+			for i,a in enumerate(approx):
+				fw.plot2(xs,1/a,a,xlab="Frequency (Hz)",ylab1="L(f)",ylab2="$L^{-1}(f)$",name=f"Approximation {i}")
 			linv = [1/l for l in saber_overlay.l]
 			fw.plot2(saber_overlay.f,saber_overlay.l,linv, name="From Saber")
-			fw.plot2(xs,1/approx[0],approx[0],xlab="Frequency (Hz)",ylab1="L(f)",ylab2="$L^{-1}(f)$",name="Approximation")
+			fw.fig.axis.set_xscale('log')
 			fw.set_fontsize(15)
 	return err
 
@@ -369,8 +374,9 @@ def create_approx(x):
 		s=separate(p)
 		# print(s)
 		s.k0=L(x1)
+		p.k0=L(x1)
 		s.sep=True
-		return s,p1
+		return s,p
 
 def time_domain(rep:Pade):
 	rep.freq_domain=False
@@ -399,28 +405,34 @@ if __name__=="__main__":
 	min_err=1e9
 	min_x0=1e9
 	approxs=[]
-	best_approx=Pade(Poly([]),Poly([]))
-	xs = np.linspace(1,12,12)
-	df=pd.DataFrame(0,index=xs,columns=['err','pow'])
+	# best_approx=Pade(Poly([]),Poly([]))
+	# xs = np.linspace(1,12,12)
+	# df=pd.DataFrame(0,index=xs,columns=['err','pow'])
 	s,p=create_approx(1)
-	best_approx=s
+	# best_approx=s
 	# print(best_approx.to_latex())
-	# s.num.coeff = [k*2 for k in s.num.coeff]
+	s_shifted = deepcopy(s)
+	s_shifted.num.coeff = [k*200 for k in s.num.coeff]
+	s_shifted.denom.coeff = [k*100 for k in s.denom.coeff]
 	test_f = [1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10]
 	fbase=np.linspace(1,10,10)
 	f1=fbase*1e5
 	f2=fbase*1e6
-	fs=f1.tolist() + f2.tolist()
-	ls=tuple(map(lambda s:1/best_approx(s),fs))
-	ls = [1e9/best_approx(f).real for f in fs]
-	pd.DataFrame(data={'f':fs,'l':ls}).to_csv("real_lf.csv")
+	fs=np.append(f1,f2)
+	# ls=tuple(map(lambda s:1/best_approx(s),fs))
+	# ls = [1e9/best_approx(f).real for f in fs]
+	# pd.DataFrame(data={'f':fs,'l':ls}).to_csv("real_lf.csv")
 	df=pd.DataFrame(0,index=test_f,columns=['L','H','delta'])
-	for freq in test_f:
+	df.index.name="f"
+	for freq in fs:
 		a=1/L(freq)
-		b=1/best_approx(freq).real
+		b=1/s(freq).real
 		df.at[freq,'L']=a
 		df.at[freq,'H']=b
 		df.at[freq,'delta']=abs(a-b)/a*100
-	# print(df)
-	time_domain(best_approx)
-	# get_err([best_approx],True)
+	print(df)
+	df.to_csv("inductances.csv")
+	# time_domain(best_approx)
+	# print(s.num.over_coeff)
+	# print(s.denom.over_coeff)
+	# get_err([s,s_shifted],True)

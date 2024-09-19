@@ -21,7 +21,12 @@ class Poly:
 	saved_as_roots:bool
 	def __init__(self,c:list,pat:bool=False,pag:bool=False,roots=False):
 		self.over_coeff=1.
-		self.coeff=[coeff for coeff in c]
+		self.coeff=[]
+		for coeff in c:
+			if isinstance(coeff,complex) and coeff.imag==0:
+				coeff=coeff.real
+			self.coeff.append(coeff)
+		# self.coeff=[coeff for coeff in c]
 		self.print_as_tuple=pat
 		self.print_as_you_go=pag
 		self.saved_as_roots = roots
@@ -194,19 +199,11 @@ def cubic_find_roots_new(p:Poly):
 	a = out.coeff[2]
 	b = out.coeff[3]
 	sel = -(b/2)**2 <= (a/3)**3
-	print("this eq is ", end='')
-	if sel:
-		print("easier")
-	else:
-		print("harder")
 	Q = a/3
 	R = b/2
 	D = Q**3 + R**2
 	S = (R + sqrt(D))**(1/3)
 	T = (R - sqrt(D))**(1/3)
-	print(f'{D=}')
-	print(f'{S=}')
-	print(f'{T=}')
 	z0 = (S+T)
 	z1 = complex(-(S+T)/2,sqrt(3)/2*(S-T))
 	z2 = complex(-(S+T)/2,-sqrt(3)/2*(S-T))
