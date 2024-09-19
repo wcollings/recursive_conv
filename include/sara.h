@@ -21,20 +21,21 @@ void step_time(struct Time_s * t);
  *
 */
 struct Solver_t {
+	int order;
 	struct Pade_t * eqs;
 	prec_t curr_t; /* The last _actual_ time */
-	int order;
+	prec_t curr_x; /* The last _actual_ value */
 	prec_t * tt; /* Past time deltas */
 	prec_t * xx; /* previous input states */
-	prec_c_t ** yy; /* previous output states */
-	prec_c_t (*qq)(float,float,int);
+	prec_c_t * yy; /* previous output states */
+	prec_c_t (*qq)(prec_c_t,prec_c_t,int);
 	void (*cb)(struct Solver_t *); /* A callback function (optional) for printing intermediate results etc.*/
 };
 
-prec_c_t q1(float,float,int);
-prec_c_t q2(float,float,int);
-prec_c_t q3(float,float,int);
-prec_c_t q4(float,float,int);
+prec_c_t q1(prec_c_t,prec_c_t,int);
+prec_c_t q2(prec_c_t,prec_c_t,int);
+prec_c_t q3(prec_c_t,prec_c_t,int);
+prec_c_t q4(prec_c_t,prec_c_t,int);
 
 /*
  * Initialize a solver object
@@ -58,12 +59,15 @@ void shift(prec_t * arr,int num_ele);
  * `SOLV`: an instance of the solver
  * `inpt`: The state variable (likey voltage or current) at the next time step
 */
-void step(struct Solver_t * SOLV, prec_t inpt, float curr_t);
+prec_t step(struct Solver_t * SOLV, prec_t inpt, float curr_t);
 /*
  * Params:
  *  - current time
  *  - voltage across part
 */
-prec_t result(int argc, prec_t *argv);
+prec_t do_step(prec_t inpt, float curr_t);
+prec_t do_accept(prec_t inpt, float curr_t);
+void write_solver(struct Solver_t * s,char* fname);
+struct Solver_t * read_solver(char * fname);
 
 #endif
