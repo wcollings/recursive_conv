@@ -250,5 +250,5 @@ for {set t 0} {$t < $tend } {set t [expr {$t+$tstep}]} {
 	set v [real [ccos [complex $tau 0]]]
 	# set i [real [SARA:Accept "inst" $tau $v]]
 	puts -nonewline $fp "$t,$v,"
-	SARA:Accept "inst" $tau $v
+	SARA:Accept "inst" $t $v
 }
