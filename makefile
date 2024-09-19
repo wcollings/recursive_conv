@@ -18,6 +18,9 @@ $(ODIR)/%.o: src/%.c $(DEPS)
 sara_lib:$(OBJ)
 	gcc -shared -o libSARA.so $^ $(CFLAGS) $(LIBS)
 
+tcl:
+	gcc -shared -o libhello.so -DUSE_TCL_STUBS -L/usr/share/tcltk/tcl8.6/ -ltclstub8.6 -I/usr/include/tcl8 -fPIC hello.c
+
 .phony: clean
 
 clean:

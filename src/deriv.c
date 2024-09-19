@@ -4,50 +4,55 @@
 
 
 prec_c_t sten_1(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
-	int terms[] = {45,9,1};
-	prec_c_t tot = 0;
+	int terms[] = {45,-9,1};
+	prec_t tot = 0;
 	for (int i=0; i < 3; ++i) {
-		tot += terms[i]*DIFF(h*(i+1));
+		prec_t temp = DIFF(h*(i+1));
+		tot += terms[i]*temp;
 	}
 	return tot/(60*h);
 }
 
 prec_c_t sten_2(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
 	int terms[] = {25,44,-9};
-	prec_c_t tot = -120*(*fn)(x);
+	prec_t tot = -120*creal((*fn)(x));
 	for (int i=0; i < 3; ++i) {
-		tot += terms[i]*SUM(h*(i+1));
+		prec_t temp = SUM(h*(i+1));
+		tot += terms[i]*temp;
 	}
 	return tot/(120*pow(h,2));
 }
 
 prec_c_t sten_3(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
 	int terms[] = {-13,8,-1};
-	prec_c_t tot = 0;
+	prec_t tot = 0;
 	for (int i=0; i < 3; ++i) {
-		tot += terms[i]*DIFF(h*(i+1));
+		prec_t temp = DIFF(h*(i+1));
+		tot += terms[i]*temp;
 	}
 	return tot/(8*pow(h,3));
 }
 prec_c_t sten_4(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
 	int terms[] = {899,-1612,837,-124};
-	prec_c_t tot = 0;
+	prec_t tot = 0;
 	for (int i=0; i < 4; ++i) {
-		tot += terms[i]*SUM(h*(i+1));
+		prec_t temp = SUM(h*(i+1));
+		tot += terms[i]*temp;
 	}
 	return tot/(930*pow(h,4));
 }
 prec_c_t sten_5(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
 	int terms[] = {5,4,1};
-	prec_c_t tot = 0;
+	prec_t tot = 0;
 	for (int i=0; i < 3; ++i) {
-		tot += terms[i]*DIFF(h*(i+1));
+		prec_t temp = DIFF(h*i+1);
+		tot += terms[i]*temp;
 	}
 	return tot/(2*pow(h,5));
 }
 prec_c_t sten_6(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
 	int terms[] = {-217,434,-279,62};
-	prec_c_t tot = 0;
+	prec_t tot = 0;
 	for (int i=0; i < 4; ++i) {
 		tot += terms[i]*SUM(h*(i+1));
 	}
@@ -63,14 +68,10 @@ prec_c_t sten_7(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
 }
 prec_c_t * take_derivatives(prec_c_t (*fn)(prec_c_t), prec_c_t x, prec_c_t h) {
 	prec_c_t * res = (prec_c_t*)malloc(sizeof(prec_c_t)*4);
-	res[0] = 9.0099e-10;
-	res[1] = -4.9895e-16;
-	res[2] = 1.1262e-22;
-	res[3] = 5.748e-28;
-	/* res[0] = (*fn)(x); */
-	/* res[1] = sten_1(fn,x,h); */
-	/* res[2] = sten_2(fn,x,h); */
-	/* res[3] = sten_3(fn,x,h); */
+	res[0] = (*fn)(x);
+	res[1] = sten_1(fn,x,h);
+	res[2] = sten_2(fn,x,h);
+	res[3] = sten_3(fn,x,h);
 	/* res[4] = sten_4(fn,x,h); */
 	/* res[5] = sten_5(fn,x,h); */
 	/* res[6] = sten_6(fn,x,h); */

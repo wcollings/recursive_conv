@@ -1,5 +1,4 @@
 from typing import Callable
-from ddiff import L
 import numpy as np
 def richardson_lut(arr:np.ndarray):
 	order = arr.shape[0]
@@ -129,8 +128,11 @@ def eval_stencil(f,x,h,p,coeffs):
 		sd=lambda h:f(x+h)+f(x-h)
 		tot=coeffs[0]*f(x)
 		coeff=coeffs[1:-1]
-	tot += sum(c*sd(h*(i+1)) for i,c in enumerate(coeff))
 	# breakpoint()
+	for i,c in enumerate(coeff):
+		temp=sd(h*(i+1))
+		tot += c*sd(h*(i+1))
+	# tot += sum(c*sd(h*(i+1)) for i,c in enumerate(coeff))
 	return tot/(denom*pow(h,p))
 
 stencils = {
@@ -161,7 +163,13 @@ stencils = {
 		]
 }
 
-L_derivs = list(map(float,open("L_deriv.csv").readline().split(',')))
+# L_derivs = list(map(float,open("L_deriv.csv").readline().split(',')))
+
+def take_derivs(l:Callable,x0:float,num:int,h:float):
+	res = [l(x0)]
+	for d in range(num):
+		res.append(eval_stencil(l,x0,h,d+1,stencils[7][d]))
+	return res
 
 if __name__=="__main__":
 	from poly import Poly
@@ -173,7 +181,6 @@ if __name__=="__main__":
 	o=7
 	h=10
 	l = lambda s:L(s)-L(x0)
-	print(L(x0))
 	approx=eval_stencil(l,x1,2,3,stencils[7][0])
 	print(f"zeroth:\t{L(x1)-L(x0):.4e}")
 	for i in range(7):
