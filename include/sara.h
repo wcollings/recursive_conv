@@ -29,7 +29,7 @@ struct Solver_t {
 	prec_t * xx; /* previous input states */
 	prec_c_t * yy; /* previous output states */
 	prec_c_t (*qq)(prec_c_t,prec_c_t,int);
-	void (*cb)(struct Solver_t *); /* A callback function (optional) for printing intermediate results etc.*/
+	void (*cb)(struct Solver_t *,prec_t result); /* A callback function (optional) for printing intermediate results etc.*/
 };
 
 prec_c_t q1(prec_c_t,prec_c_t,int);

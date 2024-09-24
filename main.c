@@ -6,11 +6,11 @@
 #include "include/poly.h"
 #include "include/sara.h"
 
-void print_results(struct Solver_t * SOLV) {
+void print_results(struct Solver_t * SOLV,prec_t result) {
 	int n=SOLV->eqs->num->num_terms;
-	prec_c_t output=SOLV->yy[n][0];
+	/* prec_c_t output=SOLV->yy[n][0]; */
 	/* printf("%f,%"PRNT_SPEC"%+"PRNT_SPEC"i\n",SOLV->curr_t,creal(output),cimag(output)); */
-	printf("%f,%lf\n",SOLV->curr_t,creal(output));
+	printf("%f,%lf\n",SOLV->curr_t,result);
 }
 
 prec_c_t L(prec_c_t f) {
@@ -41,7 +41,7 @@ int main() {
 	poly_free(out);
 	pade_free(approx);
 	pade_free(sep);
-	return 0;
+	/* return 0; */
 
 	struct Polynomial_t * num = poly_init_bare(2);
 	num->terms=malloc(2*sizeof(prec_c_t));
@@ -61,6 +61,7 @@ int main() {
 	for (int i=0; i < 40; ++i) {
 		step(solv,1,i);
 	}
+	write_solver(solv,"solv_output.bin");
 	/* prec_t res=0; */
 	/* prec_t inpts[2]={1,2}; */
 	/* printf("TIME\tV\n"); */

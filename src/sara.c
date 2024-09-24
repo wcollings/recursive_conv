@@ -151,7 +151,7 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
 	/* int n=SOLV->eqs->num->num_terms; */
 	/* SOLV->yy[n] = final; */
 	if (SOLV->cb != NULL) {
-		(*SOLV->cb)(SOLV);
+		(*SOLV->cb)(SOLV,final);
 	}
 	return creal(final);
 }
@@ -206,6 +206,7 @@ void write_solver(struct Solver_t * s,char* fname) {
 	fwrite(s->xx,sizeof(prec_t),num_terms,fp);
 	fwrite(s->yy,sizeof(prec_c_t),num_terms,fp);
 	fclose(fp);
+	printf("Solver object has been written!\n");
 }
 struct Solver_t * read_solver(char * fname) {
 	FILE *fp = fopen(fname,"rb");
