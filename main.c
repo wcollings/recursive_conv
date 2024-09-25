@@ -8,7 +8,7 @@
 
 void print_results(struct Solver_t * SOLV) {
 	int n=SOLV->eqs->num->num_terms;
-	prec_c_t output=SOLV->yy[n][0];
+	prec_c_t output=SOLV->yy[n];
 	/* printf("%f,%"PRNT_SPEC"%+"PRNT_SPEC"i\n",SOLV->curr_t,creal(output),cimag(output)); */
 	printf("%f,%lf\n",SOLV->curr_t,creal(output));
 }

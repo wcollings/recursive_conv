@@ -18,6 +18,10 @@ $(ODIR)/%.o: src/%.c $(DEPS)
 sara_lib:$(OBJ)
 	gcc -shared -o libSARA.so $^ $(CFLAGS) $(LIBS)
 
+saber:$(OBJ) saber.c
+	gcc -m32 -fPIC -Wall -c saber.c -o ind.dll -I/usr/include/saber -Iinclude/
+	# x86_64-w64-mingw32-gcc -m32 -fPIC -Wall -c saber.c -o ind.dll -I/usr/include/saber -Iinclude/
+
 tcl:
 	gcc -shared -o libhello.so -DUSE_TCL_STUBS -L/usr/share/tcltk/tcl8.6/ -ltclstub8.6 -I/usr/include/tcl8 -fPIC hello.c
 
