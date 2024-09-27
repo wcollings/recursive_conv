@@ -54,7 +54,7 @@ int main() {
 	sep=pade_init_poly(num,denom);
 	sep->offset=0;
 	sep->vals=Roots;
-	struct Solver_t * solv = solver_init(2, sep);
+	/* struct Solver_t * solv = solver_init(2, sep); */
 	solv->cb=&print_results;
 	float time=0;
 	printf("t,v\n");

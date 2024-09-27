@@ -211,8 +211,8 @@ struct Polynomial_t * roots_binomial(struct Polynomial_t * self) {
 			roots->terms[1] = c/roots->terms[0];
 		}
 		else {
-			roots->terms[0] = CMPLX(-b,sqrt(c-pow(b,2)));
-			roots->terms[1] = CMPLX(-b,-sqrt(c-pow(b,2)));
+			roots->terms[0] = (-b+I*sqrt(c-pow(b,2)));
+			roots->terms[1] = (-b-I*sqrt(c-pow(b,2)));
 		}
 	}
 	else {
@@ -222,8 +222,8 @@ struct Polynomial_t * roots_binomial(struct Polynomial_t * self) {
 
 		}
 		else {
-			roots->terms[0] = CMPLX(-b,sqrt(c-pow(b,2)));
-			roots->terms[1] = CMPLX(-b,-sqrt(c-pow(b,2)));
+			roots->terms[0] = (-b+I*sqrt(c-pow(b,2)));
+			roots->terms[1] = (-b-I*sqrt(c-pow(b,2)));
 		}
 	}
 	return roots;

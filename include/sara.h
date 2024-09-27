@@ -54,7 +54,6 @@ prec_c_t q4(prec_c_t,prec_c_t,int);
  * `returns` a fully initialized Solver object
 */
 struct Solver_t * solver_init(int order,struct Pade_t * eq);
-struct Solver_t * solver_init_from_array();
 
 /*
  * Shift an array over by one, essentially dequeueing the last element

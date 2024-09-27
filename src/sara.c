@@ -182,7 +182,7 @@ void step_resistance(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
 prec_t do_step(prec_t inpt, float curr_t) {
 	struct Solver_t * solv = read_solver("solv_obj_save.bin");
 	prec_t res=step(solv,inpt,curr_t);
-	write_solver(solv,"solv_obj_save.bin");
+	/* write_solver(solv,"solv_obj_save.bin"); */
 	return res;
 }
 prec_t do_accept(prec_t inpt, float curr_t) {
@@ -192,6 +192,21 @@ prec_t do_accept(prec_t inpt, float curr_t) {
 	return res;
 }
 
+/*
+ * Output file format:
+ * ---------------
+ * | order: 4
+ * | K0: 8
+ * | Ki: 16*order
+ * | si: 16*order
+ * | t:  8
+ * | x:  8
+ * | tt: 8*order
+ * | xx: 8*order
+ * | yy: 16*order
+ * --------------
+ *  total: 28+(64*order)
+ */
 void write_solver(struct Solver_t * s,char* fname) {
 	FILE * fp = fopen(fname,"wb");
 	fwrite(&s->order,sizeof(int),1,fp); 

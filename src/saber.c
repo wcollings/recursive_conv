@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h> //NOLINT
 #include "../include/sara.h"
 #include "../include/poly.h"
@@ -99,13 +100,12 @@ ADDAPI void ADDCALL IND(
 	in_arr.as_struct.sel=(int)in_arr.as_arr[0];
 	prec_t t=in_arr.as_struct.wrap.work.t;
 	prec_t vl=in_arr.as_struct.wrap.work.vl;
+	nout[0]=1;
 	switch ((int)JOB) {
 		case STEP: iL=do_step(t,vl);
-					  break;
 		case ACCEPT: iL=do_accept(t,vl);
-						 break;
-		default: iL= do_step(t,vl);
-					break;
-		case SETUP: iL = do_setup(in_arr.as_struct);
+		default: iL=do_step(t,vl);
+		case SETUP: iL=do_setup(in_arr.as_struct);
 	}
+	return;
 }
