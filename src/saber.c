@@ -10,39 +10,12 @@
 #define STEP 2
 #define ACCEPT 3
 #define iL out[0]
+#define t inp[2]
+#define vl inp[1]
 
 #define Kstart 2
 #define sstart 10
 
-struct init_array {
-	prec_c_t k0;
-	prec_c_t K1;
-	prec_c_t K2;
-	prec_c_t K3;
-	prec_c_t K4;
-	prec_c_t s1;
-	prec_c_t s2;
-	prec_c_t s3;
-	prec_c_t s4;
-};
-struct work_array {
-	double t;
-	double vl;
-};
-
-struct inpt {
-	int64_t sel;
-	union input_wrapper{
-		struct init_array init;
-		struct work_array work;
-	} wrap;
-};
-
-void pa_saber(double * arr,int ne) {
-	for (int i=0; i<ne; ++i) {
-		printf("%d->%le\n",i,arr[i]);
-	}
-}
 double do_setup(double * in) {
 	int order=4;
 	struct Solver_t * SOLV=malloc(sizeof(struct Solver_t));
@@ -52,7 +25,7 @@ double do_setup(double * in) {
 	for (int i=0; i < 4; ++i)
 	{
 		int idx=2*i;
-		printf("K_%d=(%1.2le+i%1.2le)\n",i,k_terms[idx],k_terms[idx+1]);
+		/* printf("K_%d=(%1.2le+i%1.2le)\n",i,k_terms[idx],k_terms[idx+1]); */
 		if (k_terms[idx]==0 && k_terms[idx+1]==0) {
 			order=i;
 			break;
@@ -102,25 +75,20 @@ void IND(
         int*   ofl,
         int*   nofl,
         double* aundef,
-        int*   ier)
+        int*   ier
+		  )
 {
-	union{
-		double * as_arr;
-		struct inpt as_struct;
-	} in_arr;
-	printf("Got %d inputs\n",ninp[0]);
-	printf("Command = %d\n",(int)JOB);
-	in_arr.as_arr=inp;
-	pa_saber(inp,ninp[0]);
-	in_arr.as_struct.sel=(int)in_arr.as_arr[0];
-	prec_t t=in_arr.as_struct.wrap.work.t;
-	prec_t vl=in_arr.as_struct.wrap.work.vl;
 	nout[0]=1;
 	switch ((int)JOB) {
-		case STEP: iL=do_step(t,vl);
-		case ACCEPT: iL=do_accept(t,vl);
-		default: iL=do_step(t,vl);
-		case SETUP: iL=do_setup(in_arr.as_struct);
+		case SETUP: iL=do_setup(&inp[1]);
+						nout[0]=0;
+						break;
+		case STEP: iL=do_step(vl,t);
+					  break;
+		case ACCEPT: iL=do_accept(vl,t);
+					  break;
+		default: iL=do_step(vl,t);
+					  break;
 	}
 	return;
 }

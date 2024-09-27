@@ -3,6 +3,7 @@
 
 #include "pade.h"
 #include "central.h"
+#include <stdint.h>
 
 struct Time_s {
 	const float T; /* The final time of the simulation */
@@ -29,7 +30,9 @@ void step_time(struct Time_s * t);
  *	`cb`: void(*)(struct Solver_t*)
 */
 struct Solver_t {
-	int order;
+	int32_t order;
+	int16_t num_calls;
+	int16_t num_steps;
 	struct Pade_t * eqs;
 	prec_t curr_t; /* The last _actual_ time */
 	prec_t curr_x; /* The last _actual_ value */
@@ -37,7 +40,7 @@ struct Solver_t {
 	prec_t * xx; /* previous input states */
 	prec_c_t * yy; /* previous output states */
 	prec_c_t (*qq)(prec_c_t,prec_c_t,int);
-	void (*cb)(struct Solver_t *); /* A callback function (optional) for printing intermediate results etc.*/
+	void (*cb)(struct Solver_t *, double res); /* A callback function (optional) for printing intermediate results etc.*/
 };
 
 prec_c_t q1(prec_c_t,prec_c_t,int);
@@ -67,14 +70,14 @@ void shift(prec_t * arr,int num_ele);
  * `SOLV`: an instance of the solver
  * `inpt`: The state variable (likey voltage or current) at the next time step
 */
-prec_t step(struct Solver_t * SOLV, prec_t inpt, float curr_t);
+prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t);
 /*
  * Params:
  *  - current time
  *  - voltage across part
 */
-prec_t do_step(prec_t inpt, float curr_t);
-prec_t do_accept(prec_t inpt, float curr_t);
+prec_t do_step(prec_t inpt, prec_t curr_t);
+prec_t do_accept(prec_t inpt, prec_t curr_t);
 void write_solver(struct Solver_t * s,char* fname);
 struct Solver_t * read_solver(char * fname);
 

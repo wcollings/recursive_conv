@@ -3,16 +3,17 @@
  * Implements Recursive Convolution
  *
 */
-#include "../include/sara.h"
-#include "../include/pade.h"
-#include "../include/interpolate.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "../include/sara.h"
+#include "../include/pade.h"
+#include "../include/interpolate.h"
 #define MIN(a,b) (a<b?a:b)
 
 struct Solver_t * solver_init(int order,struct Pade_t * eq) {
 	struct Solver_t * self = malloc(sizeof(struct Solver_t));
+	self->num_calls=0;
 	/* printf("Creating solver obj!\n"); */
 	self->cb=NULL;
 	self->eqs=eq;
@@ -51,13 +52,7 @@ float zeta(prec_c_t i, prec_c_t n) {
  * `n`: Delta_n
  */
 float Phi(prec_c_t i, prec_c_t n) {
-	static float res,_i, _n;
-	if (i!=_i || n!=_n) {
-		_i=i;
-		_n=n;
-		res= exp(i*n);
-	}
-	return res;
+	return cexp(i*n);
 }
 
 /* Assumes n=1, won't even check otherwise.
@@ -78,11 +73,11 @@ prec_c_t q2(prec_c_t sigma_i,prec_c_t delta_n, int n) {
 		q=0;
 	}
 	else switch(n) {
-		case 0: q=delta_n/2;
-		/* case 0: q=(delta_n/cpow(zi,2))*(-1+zi+phi); */
+		/* case 0: q=delta_n/2; */
+		case 0: q=(delta_n/cpow(zi,2))*(-1+zi+phi);
 				  break;
-		case 1: q=(delta_n/2)*(1-zi);
-		/* case 1: q=(delta_n/cpow(zi,2))*(1-(1+zi)*phi); */
+		/* case 1: q=(delta_n/2)*(1-zi); */
+		case 1: q=(delta_n/cpow(zi,2))*(1-(1+zi)*phi);
 				  break;
 	}
 	return q;
@@ -121,7 +116,7 @@ void shift_c(prec_c_t * arr,int num_ele) {
 	}
 }
 
-prec_t step(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
+prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	shift(SOLV->tt,SOLV->order);
 	SOLV->tt[0]=curr_t-SOLV->curr_t;
 	SOLV->curr_t=curr_t;
@@ -137,13 +132,13 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
 	for (int i=0; i < SOLV->order; ++i) {
 		prec_t delta_n=SOLV->tt[i];
 		temp=0;
-		prec_c_t sigma=SOLV->eqs->denom->terms[i];
-		prec_c_t a=SOLV->eqs->num->terms[i];
-		temp=SOLV->yy[i]*Phi(sigma,SOLV->tt[i]);
+		prec_c_t sigma_i=SOLV->eqs->denom->terms[i];
+		prec_c_t Ki=SOLV->eqs->num->terms[i];
+		temp=SOLV->yy[i]*Phi(sigma_i,SOLV->tt[i]);
 		for (int j=0; j <SOLV->order; ++j) {
 			// calculate the q terms
-			prec_c_t q=SOLV->qq(sigma,delta_n,j);
-			temp+=a*q*SOLV->xx[j];
+			prec_c_t q=SOLV->qq(sigma_i,delta_n,j);
+			temp+=Ki*q*SOLV->xx[j];
 		}
 		SOLV->yy[i]=temp;
 		final += temp;
@@ -151,7 +146,7 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
 	/* int n=SOLV->eqs->num->num_terms; */
 	/* SOLV->yy[n] = final; */
 	if (SOLV->cb != NULL) {
-		(*SOLV->cb)(SOLV);
+		(*SOLV->cb)(SOLV, creal(final));
 	}
 	return creal(final);
 }
@@ -161,7 +156,7 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
  * Reference the wiki for more accurate info on the actual equation. But this was my first attempt
  * anyway.
 */
-void step_resistance(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
+void step_resistance(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	shift(SOLV->xx,SOLV->order);
 	SOLV->xx[0]=inpt;
 	shift(SOLV->tt,SOLV->order);
@@ -179,16 +174,24 @@ void step_resistance(struct Solver_t * SOLV, prec_t inpt, float curr_t) {
 	prec_t out2 = d*SOLV->xx[0];
 	SOLV->yy[0] = out1+out2;
 }
-prec_t do_step(prec_t inpt, float curr_t) {
+prec_t do_step(prec_t inpt, prec_t curr_t) {
+	//load and simulate
 	struct Solver_t * solv = read_solver("solv_obj_save.bin");
 	prec_t res=step(solv,inpt,curr_t);
-	/* write_solver(solv,"solv_obj_save.bin"); */
+	write_solver(solv,"solv_obj_bak.bin");
+	//reset the solver so that we can update _just_ the step counter, and write
+	solv = read_solver("solv_obj_save.bin");
+	solv->num_steps++;
+	write_solver(solv,"solv_obj_save.bin");
+	free(solv);
 	return res;
 }
-prec_t do_accept(prec_t inpt, float curr_t) {
+prec_t do_accept(prec_t inpt, prec_t curr_t) {
 	struct Solver_t * solv = read_solver("solv_obj_save.bin");
+	solv->num_calls++;
 	prec_t res=step(solv,inpt,curr_t);
 	write_solver(solv,"solv_obj_save.bin");
+	free(solv);
 	return res;
 }
 
@@ -209,9 +212,11 @@ prec_t do_accept(prec_t inpt, float curr_t) {
  */
 void write_solver(struct Solver_t * s,char* fname) {
 	FILE * fp = fopen(fname,"wb");
-	fwrite(&s->order,sizeof(int),1,fp); 
+	fwrite(&s->order,sizeof(int32_t),1,fp); 
 	int num_terms=s->eqs->num->num_terms;
-	fwrite(&num_terms,sizeof(int),1,fp); 
+	/* fwrite(&num_terms,sizeof(int),1,fp);  */
+	fwrite(&s->num_calls,sizeof(int16_t),1,fp);
+	fwrite(&s->num_steps,sizeof(int16_t),1,fp);
 	fwrite(&s->eqs->offset,sizeof(prec_c_t),1,fp);
 	fwrite(s->eqs->num->terms,sizeof(prec_c_t),num_terms,fp);
 	fwrite(s->eqs->denom->terms,sizeof(prec_c_t),num_terms,fp);
@@ -225,7 +230,9 @@ void write_solver(struct Solver_t * s,char* fname) {
 struct Solver_t * read_solver(char * fname) {
 	FILE *fp = fopen(fname,"rb");
 	struct Solver_t * self=malloc(sizeof(struct Solver_t));
-	fread(&self->order,sizeof(int),1,fp);
+	fread(&self->order,sizeof(int32_t),1,fp);
+	fread(&self->num_calls,sizeof(int16_t),1,fp);
+	fread(&self->num_steps,sizeof(int16_t),1,fp);
 	prec_c_t K0;
 	fread(&K0,sizeof(prec_c_t),1,fp);
 	// Read in the equation:

@@ -15,6 +15,6 @@
 #define PRNT_SPEC "1.3e"
 #endif
 #define prec_c_t prec_t _Complex
-#define DEBUG_PRINTS 0
+#define DEBUG_PRINTS 1
 
 #endif

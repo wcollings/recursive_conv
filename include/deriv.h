@@ -1,6 +1,7 @@
 #include "../include/central.h"
 #include <math.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 
 /* Compute the first derivative of the function `fn` */
