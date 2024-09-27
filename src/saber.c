@@ -1,13 +1,14 @@
 #include <stdint.h>
 #include <stdlib.h> //NOLINT
-#include "include/sara.h"
-#include "include/poly.h"
-#include "include/saber.h"
+#include "../include/sara.h"
+#include "../include/poly.h"
+#include "../include/saber.h"
 /* #include <saberApi.h> */
 #define JOB inp[0]
 #define SETUP 1
 #define STEP 2
 #define ACCEPT 3
+#define iL out[0]
 
 struct init_array {
 	double k0;
@@ -33,7 +34,7 @@ struct inpt {
 	} wrap;
 };
 
-void do_setup(struct inpt inp) {
+double do_setup(struct inpt inp) {
 	int order=4;
 	struct Solver_t * SOLV=malloc(sizeof(struct Solver_t));
 	prec_c_t * k_terms;
@@ -75,20 +76,20 @@ void do_setup(struct inpt inp) {
 		default: SOLV->qq=q2;
 	}
 	write_solver(SOLV,"solv_obj_save.bin");
-	return;
+	return 0;
 };
 
-double ADDCALL IND( inp, ninp, ifl, nifl,out,nout,ofl,nofl,aundef,ier)
-	 double* inp;
-    int*   ninp;
-    int*   ifl;
-    int*   nifl;
-    double* out;
-    int*   nout;
-    int*   ofl;
-    int*   nofl;
-    double* aundef;
-    int*   ier;
+ADDAPI void ADDCALL IND(
+        double* inp, 
+        int*   ninp,
+        int*   ifl,
+        int*   nifl,
+        double* out,
+        int*   nout,
+        int*   ofl,
+        int*   nofl,
+        double* aundef,
+        int*   ier)
 {
 	union{
 		double * as_arr;
@@ -99,11 +100,12 @@ double ADDCALL IND( inp, ninp, ifl, nifl,out,nout,ofl,nofl,aundef,ier)
 	prec_t t=in_arr.as_struct.wrap.work.t;
 	prec_t vl=in_arr.as_struct.wrap.work.vl;
 	switch ((int)JOB) {
-		case SETUP: do_setup(in_arr.as_struct);
-						return 0.;
-						break;
-		case STEP: return do_step(t,vl);
+		case STEP: iL=do_step(t,vl);
 					  break;
-		case ACCEPT: return do_accept(t,vl);
+		case ACCEPT: iL=do_accept(t,vl);
+						 break;
+		default: iL= do_step(t,vl);
+					break;
+		case SETUP: iL = do_setup(in_arr.as_struct);
 	}
 }
