@@ -229,35 +229,53 @@ void write_solver(struct Solver_t * s,char* fname) {
 }
 struct Solver_t * read_solver(char * fname) {
 	FILE *fp = fopen(fname,"rb");
+	int tot_objs=0;
+	int num_objs=0;
 	struct Solver_t * self=malloc(sizeof(struct Solver_t));
 	fread(&self->order,sizeof(int32_t),1,fp);
 	fread(&self->num_calls,sizeof(int16_t),1,fp);
 	fread(&self->num_steps,sizeof(int16_t),1,fp);
 	prec_c_t K0;
-	fread(&K0,sizeof(prec_c_t),1,fp);
+	num_objs=fread(&K0,sizeof(prec_c_t),1,fp);
+	tot_objs+=num_objs;
+	printf("(K0) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
 	// Read in the equation:
 	// Ki terms
 	struct Polynomial_t * num = poly_init_bare(self->order);
 	num->terms = malloc(sizeof(prec_c_t)*self->order);
-	fread(num->terms,sizeof(prec_c_t),self->order,fp);
+	num_objs=fread(num->terms,sizeof(prec_c_t),self->order,fp);
+	tot_objs+=num_objs;
+	printf("(order) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
 	//sigma_i terms
 	struct Polynomial_t * denom = poly_init_bare(self->order);
 	denom->terms = malloc(sizeof(prec_c_t)*self->order);
-	fread(denom->terms,sizeof(prec_c_t),self->order,fp);
+	num_objs=fread(denom->terms,sizeof(prec_c_t),self->order,fp);
+	tot_objs+=num_objs;
+	printf("(K0) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
 	// Form the object
 	struct Pade_t * eq = pade_init_poly(num,denom);
 	eq->offset = K0;
 	eq->vals=Roots;
 	self->eqs = eq;
 	
-	fread(&self->curr_t,sizeof(prec_t),1,fp);
-	fread(&self->curr_x,sizeof(prec_t),1,fp);
+	num_objs=fread(&self->curr_t,sizeof(prec_t),1,fp);
+	tot_objs+=num_objs;
+	printf("(Ki) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
+	num_objs=fread(&self->curr_x,sizeof(prec_t),1,fp);
+	tot_objs+=num_objs;
+	printf("(si) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
 	self->tt = (prec_t*)malloc(sizeof(prec_t)*self->order);
-	fread(self->tt,sizeof(prec_t),self->order,fp);
+	num_objs=fread(self->tt,sizeof(prec_t),self->order,fp);
+	tot_objs+=num_objs;
+	printf("(tt) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
 	self->xx = (prec_t*)malloc(sizeof(prec_t)*self->order);
-	fread(self->xx,sizeof(prec_t),self->order,fp);
+	num_objs=fread(self->xx,sizeof(prec_t),self->order,fp);
+	tot_objs+=num_objs;
+	printf("(xx) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
 	self->yy = (prec_c_t*)malloc(sizeof(prec_t)*self->order);
-	fread(self->yy,sizeof(prec_c_t),self->order,fp);
+	num_objs=fread(self->yy,sizeof(prec_c_t),self->order,fp);
+	tot_objs+=num_objs;
+	printf("(K0) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
 	switch (self->order) {
 		case 1: self->qq=q1;
 				  break;
@@ -270,6 +288,6 @@ struct Solver_t * read_solver(char * fname) {
 		default: self->qq=q2;
 	}
 	self->cb=NULL;
-	return self;
 	fclose(fp);
+	return self;
 }
