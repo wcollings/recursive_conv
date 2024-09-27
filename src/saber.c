@@ -11,8 +11,11 @@
 #define ACCEPT 3
 #define iL out[0]
 
+#define Kstart 2
+#define sstart 10
+
 struct init_array {
-	double k0;
+	prec_c_t k0;
 	prec_c_t K1;
 	prec_c_t K2;
 	prec_c_t K3;
@@ -35,30 +38,39 @@ struct inpt {
 	} wrap;
 };
 
-double do_setup(struct inpt inp) {
+void pa_saber(double * arr,int ne) {
+	for (int i=0; i<ne; ++i) {
+		printf("%d->%le\n",i,arr[i]);
+	}
+}
+double do_setup(double * in) {
 	int order=4;
 	struct Solver_t * SOLV=malloc(sizeof(struct Solver_t));
-	prec_c_t * k_terms;
-	k_terms=&inp.wrap.init.K1;
-	prec_c_t * s_terms;
-	s_terms=&inp.wrap.init.s1;
+	prec_t * k_terms;
+	k_terms=&in[Kstart];
+	prec_t * s_terms=&in[sstart];
 	for (int i=0; i < 4; ++i)
 	{
-		if (k_terms[i]==0) {
+		int idx=2*i;
+		printf("K_%d=(%1.2le+i%1.2le)\n",i,k_terms[idx],k_terms[idx+1]);
+		if (k_terms[idx]==0 && k_terms[idx+1]==0) {
 			order=i;
 			break;
 		}
 	}
+	printf("Found %d terms\n",order);
 	struct Polynomial_t * num=poly_init_bare(order);
 	struct Polynomial_t * denom=poly_init_bare(order);
 	num->terms=malloc(sizeof(prec_c_t)*order);
 	denom->terms=malloc(sizeof(prec_c_t)*order);
 	for (int i=0; i < order; ++i) {
-		num->terms[i]=k_terms[i];
-		denom->terms[i]=s_terms[i];
+		int idx=2*i;
+		num->terms[i]=k_terms[idx]+k_terms[idx+1]*I;
+		denom->terms[i]=s_terms[idx]+s_terms[idx+1]*I;
 	}
 	struct Pade_t * pade=pade_init_poly(num,denom);
-	pade->offset=inp.wrap.init.k0;
+	pade->offset=in[0]+in[1]*I;
+	SOLV->order=order;
 	SOLV->eqs=pade;
 	SOLV->curr_t=0;
 	SOLV->curr_x=0;
@@ -80,7 +92,7 @@ double do_setup(struct inpt inp) {
 	return 0;
 };
 
-ADDAPI void ADDCALL IND(
+void IND(
         double* inp, 
         int*   ninp,
         int*   ifl,
@@ -96,7 +108,10 @@ ADDAPI void ADDCALL IND(
 		double * as_arr;
 		struct inpt as_struct;
 	} in_arr;
+	printf("Got %d inputs\n",ninp[0]);
+	printf("Command = %d\n",(int)JOB);
 	in_arr.as_arr=inp;
+	pa_saber(inp,ninp[0]);
 	in_arr.as_struct.sel=(int)in_arr.as_arr[0];
 	prec_t t=in_arr.as_struct.wrap.work.t;
 	prec_t vl=in_arr.as_struct.wrap.work.vl;
