@@ -18,7 +18,15 @@ void step_time(struct Time_s * t);
  * To solve these, we really need the time deltas, not the times themselves. To save computation,
  * we can compute that once and save it, then save the last actual time so that we can compute
  * the next time delta as well going forward.
- *
+ * `order`: int
+ * `eqs`: Pade_t*
+ * `curr_t`: prec_t
+ * `curr_x`: prec_t
+ * `tt`: prec_t[order]
+ * `xx`: prec_t[order]
+ *	`yy`: prec_c_t[order]
+ *	`qq`: prec_c_t(*)(prec_c_t,prec_c_t,int)
+ *	`cb`: void(*)(struct Solver_t*)
 */
 struct Solver_t {
 	int order;
