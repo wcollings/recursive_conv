@@ -81,13 +81,20 @@ void IND(
 	nout[0]=1;
 	switch ((int)JOB) {
 		case SETUP: iL=do_setup(&inp[1]);
-						nout[0]=0;
+						nout[0]=1;
+						iL = 1;
 						break;
 		case STEP: iL=do_step(vl,t);
+		printf("step");
+						//iL=0;
 					  break;
 		case ACCEPT: iL=do_accept(vl,t);
+		printf("accept");
+						//iL=0;
 					  break;
 		default: iL=do_step(vl,t);
+		printf("default - step");
+						//iL=0;
 					  break;
 	}
 	return;
