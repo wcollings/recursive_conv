@@ -17,6 +17,7 @@ struct Polynomial_t * poly_init_bare(int num_terms) {
 	struct Polynomial_t * out = malloc(sizeof(struct Polynomial_t));
 	out->tp=Vals;
 	out->num_terms=num_terms;
+	out->coeff=1;
 	/* out->terms = calloc(num_terms,sizeof(prec_c_t)); */
 	return out;
 }
@@ -31,6 +32,7 @@ struct Polynomial_t * poly_add(struct Polynomial_t * a, struct Polynomial_t * b)
 	}
 	res->num_terms=a->num_terms;
 	res->terms=malloc(sizeof(prec_c_t)*res->num_terms);
+	res->coeff=1;
 	int i=0;
 	for (; i < b->num_terms; ++i) {
 		res->terms[i]=a->terms[i]+b->terms[i];
@@ -50,6 +52,7 @@ struct Polynomial_t * poly_mul(struct Polynomial_t * a, struct Polynomial_t * b)
 		b=lhs;
 	}
 	res->num_terms=a->num_terms+b->num_terms-1;
+	res->coeff=1;
 	res->terms=calloc(res->num_terms,sizeof(prec_c_t));
 	for (int i=0; i < a->num_terms; ++i) {
 		for (int j=0; j < b->num_terms; ++j ) {
@@ -64,7 +67,7 @@ prec_c_t poly_eval(struct Polynomial_t * a, prec_c_t val) {
 	for (int i=1; i < a->num_terms; ++i) {
 		res=a->terms[i]+val*res;
 	}
-	return res;
+	return res*a->coeff;
 }
 
 void poly_print(struct Polynomial_t * p) {
@@ -84,12 +87,14 @@ void poly_print(struct Polynomial_t * p) {
 struct Polynomial_t * poly_sd_1term(struct Polynomial_t * num, prec_c_t z) {
 	struct Polynomial_t * res=poly_init_bare(num->num_terms-1);
 	res->terms = malloc((num->num_terms-1)*sizeof(prec_c_t));
-	res->terms[0]=num->terms[0];
+	prec_c_t last=num->terms[0];
+	res->terms[0]=last;
 	int i;
-	for (i=1; i < res->num_terms-1; ++i) {
-		res->terms[i]=res->terms[i-1]*z+num->terms[i];
+	for (i=1; i < res->num_terms; ++i) {
+		res->terms[i]=last*z+num->terms[i];
+		last = res->terms[i];
 	}
-	poly_depress(res);
+	/* poly_depress(res); */
 	return res;
 }
 
@@ -157,7 +162,7 @@ int * pascal(int row, int invert) {
 		/* int offset=i-SUMUP(col); */
 	}
 	for (int i = 1; i < row+1; ++i) {
-		for (int j=1; j < floor((i-1)/2+2); ++j) {
+		for (int j=1; j < floor((i-1.)/2+2); ++j) {
 			tri[SUMUP(i)+2*j-1]*=-1;
 		}
 	}
@@ -172,7 +177,9 @@ struct Polynomial_t * poly_recenter(struct Polynomial_t * src, prec_c_t c) {
 	for (int i=0; i < N; ++i) {
 		prec_c_t term = 0;
 		for (int j = 0; j<=i; ++j) {
-			term += tri[SUMUP(N-j-1)+(i-j)]*src->terms[j]*pow(c,i-j); //NOLINT
+			int loc = SUMUP(N-j-1)+(i-j);
+			prec_c_t bn=src->terms[j];
+			term += tri[loc]*bn*pow(c,i-j); //NOLINT
 		}
 		dest->terms[i] = term;
 	}
@@ -182,6 +189,7 @@ struct Polynomial_t * poly_recenter(struct Polynomial_t * src, prec_c_t c) {
 
 void poly_depress(struct Polynomial_t * self) {
 	prec_c_t max_term = self->terms[0];
+	self->coeff=max_term;
 	for (int i=0; i < self->num_terms; ++i) {
 		self->terms[i]/=max_term;
 	}
@@ -198,13 +206,15 @@ struct Polynomial_t * poly_diff(struct Polynomial_t * self) {
 }
 
 struct Polynomial_t * roots_binomial(struct Polynomial_t * self) {
-	prec_c_t b,c;
+	prec_c_t a,b,c;
 	struct Polynomial_t * roots = poly_init_bare(2);
 	roots->terms = malloc((self->num_terms-1)*sizeof(prec_c_t));
 	roots->tp=Roots;
-	poly_depress(self);
-	b=self->terms[1]/2;
-	c=self->terms[2];
+	/* poly_depress(self); */
+	roots->coeff=self->coeff;
+	a=self->terms[0];
+	b=self->terms[1]/2/a;
+	c=self->terms[2]/a;
 	if (cabs(b) > 0) {
 		if (cabs(cpow(b,2)) > cabs(c)) {
 			roots->terms[0] = -(b+sqrt(pow(b,2)-c));

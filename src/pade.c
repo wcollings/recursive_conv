@@ -16,7 +16,11 @@ struct Pade_t * pade_init(prec_c_t *A, prec_c_t *B,int M, int N) {
 	self->vals=Vals;
 	self->num=malloc(sizeof(struct Polynomial_t));
 	self->denom=malloc(sizeof(struct Polynomial_t));
+	self->num->coeff=1;
+	self->denom->coeff=1;
 	self->num->num_terms=M;
+	self->num->tp=Vals;
+	self->denom->tp=Vals;
 	self->num->terms=A;
 	self->denom->num_terms=N;
 	self->denom->terms=B;
@@ -214,15 +218,22 @@ struct Pade_t * pade_separate(struct Pade_t * self) {
 	printf("given pade approximation:\n");
 	pade_print(self);
 	#endif
+	/* poly_print(self->denom); */
+	/* poly_print(self->num); */
 	struct Polynomial_t * roots=poly_get_roots(self->denom);
+	/* poly_print(roots); */
 	int end=self->denom->num_terms-1;
 	struct Polynomial_t * evaled = malloc(sizeof(struct Polynomial_t));
+	/* poly_print(self->num); */
 	evaled->terms = malloc(sizeof(prec_c_t)*self->denom->num_terms);
+	/* poly_print(self->denom); */
 	evaled->num_terms=roots->num_terms;
-	for (int i=0; i<evaled->num_terms; ++i) {
+	for (int i=0; i < roots->num_terms; ++i) {
 		struct Polynomial_t * sd = poly_sd_1term(self->denom,roots->terms[i]);
+		/* poly_print(sd); */
 		prec_c_t temp = poly_eval(sd,roots->terms[i]);
-		evaled->terms[i]=poly_eval(self->num,roots->terms[i]);
+		prec_c_t up=poly_eval(self->num,roots->terms[i]);
+		evaled->terms[i]=up/temp;
 		poly_free(sd);
 	}
 	struct Pade_t * ret=pade_init_poly(evaled, roots);
