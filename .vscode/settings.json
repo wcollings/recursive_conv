@@ -7,5 +7,6 @@
             "binaryArgs": []
         }
     ],
-    "makefile.makePath": "C:\\\\msys64\\\\usr\\\\bin\\\\make.exe"
+    "makefile.makePath": " C:\\\\msys64\\\\usr\\\\bin\\\\make",
+    "makefile.makefilePath": "C:\\Users\\samru\\source\\repos\\wcollings\\recursive_conv-1"
 }

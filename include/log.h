@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-FILE * lf;
+extern FILE * lf;
 void log_init(char * log_name);
 void log_warn(char * msg);
 void log_err(char * msg);
