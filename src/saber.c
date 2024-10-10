@@ -4,7 +4,6 @@
 #include "../include/sara.h"
 #include "../include/poly.h"
 #include "../include/saber.h"
-/* #include <saberApi.h> */
 #define JOB inp[0]
 #define SETUP 1
 #define STEP 2
@@ -13,8 +12,11 @@
 #define t inp[2]
 #define vl inp[1]
 
-#define Kstart 2
-#define sstart 10
+#define MODE inp[2]
+#define L 1
+#define X 0
+#define Kstart 3
+#define sstart 11
 
 double do_setup(double * in) {
 	int order=4;
@@ -25,7 +27,6 @@ double do_setup(double * in) {
 	for (int i=0; i < 4; ++i)
 	{
 		int idx=2*i;
-		/* printf("K_%d=(%1.2le+i%1.2le)\n",i,k_terms[idx],k_terms[idx+1]); */
 		if (k_terms[idx]==0 && k_terms[idx+1]==0) {
 			order=i;
 			break;
@@ -43,7 +44,7 @@ double do_setup(double * in) {
 	}
 	struct Pade_t * pade=pade_init_poly(num,denom);
 	pade->offset=in[0]+in[1]*I;
-	SOLV->order=order;
+	SOLV->head.order=order;
 	SOLV->eqs=pade;
 	SOLV->curr_t=0;
 	SOLV->curr_x=0;
@@ -79,6 +80,9 @@ void IND(
 		  )
 {
 	nout[0]=1;
+	if (nout[1] < nout[0]) {
+		return;
+	}
 	switch ((int)JOB) {
 		case SETUP: iL=do_setup(&inp[1]);
 						nout[0]=1;

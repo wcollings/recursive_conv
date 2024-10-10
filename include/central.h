@@ -5,6 +5,7 @@
 #ifndef __CENTRAL_H__
 #define __CENTRAL_H__
 #include <complex.h>
+#include "log.h"
 
 #define USE_DOUBLE 1
 #if USE_DOUBLE
@@ -15,6 +16,6 @@
 #define PRNT_SPEC "1.3e"
 #endif
 #define prec_c_t prec_t _Complex
-#define DEBUG_PRINTS 1
+#define DEBUG_PRINTS 0
 
 #endif

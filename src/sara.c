@@ -11,13 +11,14 @@
 #include "../include/interpolate.h"
 #define MIN(a,b) (a<b?a:b)
 
-struct Solver_t * solver_init(int order,struct Pade_t * eq) {
+struct Solver_t * solver_init(int order,struct Pade_t * eq,int mode) {
 	struct Solver_t * self = malloc(sizeof(struct Solver_t));
 	self->num_calls=0;
 	/* printf("Creating solver obj!\n"); */
 	self->cb=NULL;
 	self->eqs=eq;
-	self->order=order;
+	self->head.order=order;
+	self->head.mode=mode;
 	self->curr_t=0;
 	self->curr_x=0;
 	self->xx = calloc(sizeof(prec_t),order);
@@ -36,13 +37,20 @@ struct Solver_t * solver_init(int order,struct Pade_t * eq) {
 	}
 	return self;
 }
+void solver_free(struct Solver_t * self) {
+	pade_free(self->eqs);
+	free(self->tt);
+	free(self->xx);
+	free(self->yy);
+	free(self);
+}
 
 /*
  * Calculates $\zeta_{i,n}$
  * `i`: s_i
  * `n`: Delta_n
  */
-float zeta(prec_c_t i, prec_c_t n) {
+prec_c_t zeta(prec_c_t i, prec_c_t n) {
 	return -(i*n);
 }
 
@@ -51,7 +59,7 @@ float zeta(prec_c_t i, prec_c_t n) {
  * `i`: s_i
  * `n`: Delta_n
  */
-float Phi(prec_c_t i, prec_c_t n) {
+prec_c_t Phi(prec_c_t i, prec_c_t n) {
 	return cexp(i*n);
 }
 
@@ -69,16 +77,26 @@ prec_c_t q2(prec_c_t sigma_i,prec_c_t delta_n, int n) {
 	prec_c_t q;
 	prec_c_t phi=Phi(sigma_i,delta_n);
 	prec_c_t zi=zeta(sigma_i,delta_n);
+
+	prec_c_t c1 = (delta_n+0*I)/cpow(zi,2);
+	prec_c_t z2 = cpow(zi,2);
+	prec_c_t c2 = (zi-phi-1);
+	prec_c_t c3 = 1-(1+zi)*phi;
+	/* printf("zeta^2: %le + j%le\n",creal(z2),cimag(z2)); */
+	/* printf("C1: %le + j%le\n",creal(c1),cimag(c1)); */
+	/* printf("C2: %le + j%le\n",creal(c2),cimag(c2)); */
+	/* printf("q2,0= %le + j%le\n",creal(c1*c2),cimag(c1*c2)); */
+	/* printf("C3: %le + j%le\n",creal(c3),cimag(c3)); */
+	/* printf("q2,1= %le + j%le\n",creal(c1*c3),cimag(c1*c3)); */
 	if (delta_n==0) {
 		q=0;
 	}
 	else switch(n) {
 		/* case 0: q=delta_n/2; */
-		case 0: q=(delta_n/cpow(zi,2))*(-1+zi+phi);
-				  break;
+		case 0: return c1*c2;
 		/* case 1: q=(delta_n/2)*(1-zi); */
-		case 1: q=(delta_n/cpow(zi,2))*(1-(1+zi)*phi);
-				  break;
+		case 1: return c1*c3;
+		default: return c1*c2;
 	}
 	return q;
 
@@ -117,25 +135,30 @@ void shift_c(prec_c_t * arr,int num_ele) {
 }
 
 prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
-	shift(SOLV->tt,SOLV->order);
+	shift(SOLV->tt,SOLV->head.order);
 	SOLV->tt[0]=curr_t-SOLV->curr_t;
 	SOLV->curr_t=curr_t;
-	prec_t last_x=SOLV->curr_x;
-	prec_t integ = SOLV->tt[0]*((last_x+inpt)/2);
-	prec_t new_x = SOLV->xx[0]+integ;
-	shift(SOLV->xx,SOLV->order);
+	prec_t new_x;
+	if (SOLV->head.mode==INDUCTANCE) {
+		prec_t last_x=SOLV->curr_x;
+		prec_t integ = SOLV->tt[0]*((last_x+inpt)/2);
+		prec_t new_x = SOLV->xx[0]+integ;
+	} else {
+		new_x = inpt;
+	}
+	shift(SOLV->xx,SOLV->head.order);
 	SOLV->xx[0]=new_x;
 	SOLV->curr_x=inpt;
 
 	prec_c_t temp;
 	prec_c_t final=SOLV->eqs->offset*new_x;
-	for (int i=0; i < SOLV->order; ++i) {
+	for (int i=0; i < SOLV->head.order; ++i) {
 		prec_t delta_n=SOLV->tt[i];
 		temp=0;
 		prec_c_t sigma_i=SOLV->eqs->denom->terms[i];
 		prec_c_t Ki=SOLV->eqs->num->terms[i];
-		temp=SOLV->yy[i]*Phi(sigma_i,SOLV->tt[i]);
-		for (int j=0; j <SOLV->order; ++j) {
+		temp=SOLV->yy[i]*Phi(sigma_i,delta_n);
+		for (int j=0; j <SOLV->head.order; ++j) {
 			// calculate the q terms
 			prec_c_t q=SOLV->qq(sigma_i,delta_n,j);
 			temp+=Ki*q*SOLV->xx[j];
@@ -157,9 +180,9 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
  * anyway.
 */
 void step_resistance(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
-	shift(SOLV->xx,SOLV->order);
+	shift(SOLV->xx,SOLV->head.order);
 	SOLV->xx[0]=inpt;
-	shift(SOLV->tt,SOLV->order);
+	shift(SOLV->tt,SOLV->head.order);
 	SOLV->tt[0]=curr_t-SOLV->curr_t;
 	prec_t b = 2.04e-9;
 	prec_t c = -0.2739;
@@ -191,7 +214,7 @@ prec_t do_accept(prec_t inpt, prec_t curr_t) {
 	solv->num_calls++;
 	prec_t res=step(solv,inpt,curr_t);
 	write_solver(solv,"solv_obj_save.bin");
-	free(solv);
+	solver_free(solv);
 	return res;
 }
 
@@ -199,7 +222,9 @@ prec_t do_accept(prec_t inpt, prec_t curr_t) {
  * Output file format:
  * ---------------
  * | order: 4
- * | K0: 8
+ * | num_calls: 2
+ * | num_steps: 2
+ * | K0: 16
  * | Ki: 16*order
  * | si: 16*order
  * | t:  8
@@ -208,11 +233,11 @@ prec_t do_accept(prec_t inpt, prec_t curr_t) {
  * | xx: 8*order
  * | yy: 16*order
  * --------------
- *  total: 28+(64*order)
+ *  total: 40+(64*order)
  */
 void write_solver(struct Solver_t * s,char* fname) {
 	FILE * fp = fopen(fname,"wb");
-	fwrite(&s->order,sizeof(int32_t),1,fp); 
+	fwrite(&s->head,sizeof(int32_t),1,fp); 
 	int num_terms=s->eqs->num->num_terms;
 	/* fwrite(&num_terms,sizeof(int),1,fp);  */
 	fwrite(&s->num_calls,sizeof(int16_t),1,fp);
@@ -232,26 +257,26 @@ struct Solver_t * read_solver(char * fname) {
 	int tot_objs=0;
 	int num_objs=0;
 	struct Solver_t * self=malloc(sizeof(struct Solver_t));
-	fread(&self->order,sizeof(int32_t),1,fp);
+	fread(&self->head,sizeof(int32_t),1,fp);
 	fread(&self->num_calls,sizeof(int16_t),1,fp);
 	fread(&self->num_steps,sizeof(int16_t),1,fp);
 	prec_c_t K0;
 	num_objs=fread(&K0,sizeof(prec_c_t),1,fp);
 	tot_objs+=num_objs;
-	printf("(K0) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
+	/* printf("(K0) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
 	// Read in the equation:
 	// Ki terms
-	struct Polynomial_t * num = poly_init_bare(self->order);
-	num->terms = malloc(sizeof(prec_c_t)*self->order);
-	num_objs=fread(num->terms,sizeof(prec_c_t),self->order,fp);
+	struct Polynomial_t * num = poly_init_bare(self->head.order);
+	num->terms = malloc(sizeof(prec_c_t)*self->head.order);
+	num_objs=fread(num->terms,sizeof(prec_c_t),self->head.order,fp);
 	tot_objs+=num_objs;
-	printf("(order) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
+	/* printf("(Ki) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
 	//sigma_i terms
-	struct Polynomial_t * denom = poly_init_bare(self->order);
-	denom->terms = malloc(sizeof(prec_c_t)*self->order);
-	num_objs=fread(denom->terms,sizeof(prec_c_t),self->order,fp);
+	struct Polynomial_t * denom = poly_init_bare(self->head.order);
+	denom->terms = malloc(sizeof(prec_c_t)*self->head.order);
+	num_objs=fread(denom->terms,sizeof(prec_c_t),self->head.order,fp);
 	tot_objs+=num_objs;
-	printf("(K0) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
+	/* printf("(si) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
 	// Form the object
 	struct Pade_t * eq = pade_init_poly(num,denom);
 	eq->offset = K0;
@@ -260,23 +285,23 @@ struct Solver_t * read_solver(char * fname) {
 	
 	num_objs=fread(&self->curr_t,sizeof(prec_t),1,fp);
 	tot_objs+=num_objs;
-	printf("(Ki) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
+	/* printf("(curr_t) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
 	num_objs=fread(&self->curr_x,sizeof(prec_t),1,fp);
 	tot_objs+=num_objs;
-	printf("(si) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
-	self->tt = (prec_t*)malloc(sizeof(prec_t)*self->order);
-	num_objs=fread(self->tt,sizeof(prec_t),self->order,fp);
+	/* printf("(curr_x) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
+	self->tt = (prec_t*)malloc(sizeof(prec_t)*self->head.order);
+	num_objs=fread(self->tt,sizeof(prec_t),self->head.order,fp);
 	tot_objs+=num_objs;
-	printf("(tt) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
-	self->xx = (prec_t*)malloc(sizeof(prec_t)*self->order);
-	num_objs=fread(self->xx,sizeof(prec_t),self->order,fp);
+	/* printf("(tt) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
+	self->xx = (prec_t*)malloc(sizeof(prec_t)*self->head.order);
+	num_objs=fread(self->xx,sizeof(prec_t),self->head.order,fp);
 	tot_objs+=num_objs;
-	printf("(xx) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
-	self->yy = (prec_c_t*)malloc(sizeof(prec_t)*self->order);
-	num_objs=fread(self->yy,sizeof(prec_c_t),self->order,fp);
+	/* printf("(xx) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
+	self->yy = (prec_c_t*)malloc(sizeof(prec_t)*self->head.order);
+	num_objs=fread(self->yy,sizeof(prec_c_t),self->head.order,fp);
 	tot_objs+=num_objs;
-	printf("(K0) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs);
-	switch (self->order) {
+	/* printf("(yy) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
+	switch (self->head.order) {
 		case 1: self->qq=q1;
 				  break;
 		case 2: self->qq=q2;
