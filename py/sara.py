@@ -72,7 +72,7 @@ class Solver:
 		self.prev_values[x_idx].pop()
 		self.prev_values[x_idx]= [new_integral] + self.prev_values[x_idx]
 		if len(self.prev_values[x_idx]) > 4:
-			print("List is expanding!")
+			# print("List is expanding!")
 			self.prev_values[x_idx]=self.prev_values[x_idx][:4]
 		self.prev_delta_ts=[delta_t] + self.prev_delta_ts
 		self.prev_time = t
@@ -157,25 +157,14 @@ def load_approx(i)->Pade:
 		p=solve_system(p1,1,2)
 		# p.k0=1e8
 		p.k0=L(x1)
-		print(f"K0={L(x1)} -> {1/L(x1)}H")
+		# print(f"K0={L(x1)} -> {1/L(x1)}H")
 		return separate(p)
 	return Pade(Poly([0]),Poly([0]))
 
-def run(solv, fname:str):
-	datafile=pd.read_csv(fname)
-	datafile['i']=0
-	datafile['int_v']=0
-	datafile['err']=0
-	x=solv.idxs.index('x')
-	for i in range(datafile.shape[0]):
-		v=datafile['v'][i]
-		t=datafile['t'][i]
-		res=step(solv,t,v)
-		datafile['i'][i]=res
-		known=datafile['known_i'][i]
-		datafile['err'][i]=abs(known-res)/res
-		datafile['int_v'][i]=solv.prev_values[x][0]
-	return datafile
+def run(solv:Solver,in_vec:np.ndarray):
+		for row in in_vec:
+			out=step(solv,row[0],row[1])
+			print(f"{row[0]},{row[1]},{solv.prev_values[-1][0]},{out}")
 
 
 
@@ -184,8 +173,9 @@ if __name__=="__main__":
 	print(p)
 	# K=[k.real for k in p.num.coeff]
 	# s=[sig.real for sig in p.denom.coeff]
-	# with open("../tcl/coeff.csv","w") as fp:
-	# 	fp.write(p.get_coeff_str())
+	with open("../tcl/coeff.csv","w") as fp:
+		fp.write(p.get_coeff_str())
+	exit(1)
 	solv=Solver(p)
 	pi=3.14
 	end=1000
@@ -195,27 +185,31 @@ if __name__=="__main__":
 	solv=Solver(p)
 	# solv.k0*=1.4
 	# solv.K = [K*2 for K in solv.K]
-	f_1e5=run(solv,"vsig_low.csv")
-	solv=Solver(p)
-	f_1e8=run(solv,"vsig.csv")
-	fig,axs = plt.subplots(2,2,sharex='row') #pyright:ignore
-	axs[0,0].plot(f_1e5.t,f_1e5.i,label="predicted")
-	axs[0,0].plot(f_1e5.t,f_1e5.known_i, label="static L, 1.3nH")
-	axs[0,0].grid(True)
-	axs[0,0].set_title("f=100kHz")
-	axs[0,0].legend()
-	axs[0,1].plot(f_1e5.t,f_1e5.err)
-	axs[0,1].grid(True)
-	axs[0,1].set_title("Error")
-
-	axs[1,0].set_title("f=10MHz")
-	axs[1,0].plot(f_1e8.t,f_1e8.i,label="predicted")
-	axs[1,0].plot(f_1e8.t,f_1e8.known_i,label="static L, 1.3nH")
-	axs[1,0].grid(True)
-	axs[1,0].legend()
-	axs[1,1].plot(f_1e8.t,f_1e8.err)
-	axs[1,1].grid(True)
-	axs[1,1].set_title("Error")
-	# axs[0].plot(f_1e6.t,f_1e6.int_v)
-	# axs[0].grid(True)
-	plt.show()
+	in_arr=np.zeros((40,2))
+	in_arr[:,0]=list(range(40))
+	in_arr[:,1]=1
+	run(solv,in_arr)
+	# f_1e5=run(solv,"vsig_low.csv")
+	# solv=Solver(p)
+	# f_1e8=run(solv,"vsig.csv")
+	# fig,axs = plt.subplots(2,2,sharex='row') #pyright:ignore
+	# axs[0,0].plot(f_1e5.t,f_1e5.i,label="predicted")
+	# axs[0,0].plot(f_1e5.t,f_1e5.known_i, label="static L, 1.3nH")
+	# axs[0,0].grid(True)
+	# axs[0,0].set_title("f=100kHz")
+	# axs[0,0].legend()
+	# axs[0,1].plot(f_1e5.t,f_1e5.err)
+	# axs[0,1].grid(True)
+	# axs[0,1].set_title("Error")
+	#
+	# axs[1,0].set_title("f=10MHz")
+	# axs[1,0].plot(f_1e8.t,f_1e8.i,label="predicted")
+	# axs[1,0].plot(f_1e8.t,f_1e8.known_i,label="static L, 1.3nH")
+	# axs[1,0].grid(True)
+	# axs[1,0].legend()
+	# axs[1,1].plot(f_1e8.t,f_1e8.err)
+	# axs[1,1].grid(True)
+	# axs[1,1].set_title("Error")
+	# # axs[0].plot(f_1e6.t,f_1e6.int_v)
+	# # axs[0].grid(True)
+	# plt.show()

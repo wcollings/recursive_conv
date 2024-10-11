@@ -1,4 +1,5 @@
 from copy import deepcopy
+from functools import reduce
 from si_num import from_si,to_si
 from typing import Sequence, Iterable
 from poly import Poly,synth_div
@@ -73,7 +74,7 @@ class Pade:
 			for K,s in zip(self.num.coeff,self.denom.coeff):
 				this_term = K*cmath.exp(s*x)
 				ret+=this_term
-			assert ret.imag < 1e-14
+			# assert ret.imag < 1e-14
 			return ret.real
 		if self.sep:
 			ret=self.k0
@@ -273,10 +274,14 @@ def sample_matrix(M,N):
 		print(y[r].decode())
 
 def L(f):
-	a=21.81e-9
-	b=25.35e-9
-	c=4.01e-7
-	f0=374.06e3
+	a=17.02e-9
+	b=23.71e-9
+	c=3.05e-5
+	f0=2048
+	# a=21.81e-9
+	# b=25.35e-9
+	# c=4.01e-7
+	# f0=374.06e3
 	res=(0.6366*a)*atan(-c*(f-f0))+b;
 	return 1/res
 
@@ -318,13 +323,14 @@ def solve_system(p:Poly,M:int,N:int) -> Pade:
 	# return Pade(Poly(a[::-1]).recenter(-2e6),Poly(b[::-1]).recenter(-2e6))
 
 def get_err(rep,plot=False):
-	xs=logspace(1,9,10000)
+	xs=logspace(3,8,1000)
 	sig=tuple(map(L,xs))
 	if not isinstance(rep,Iterable):
 		rep=[rep]
 	sig=array(sig)
 	approx=[]
 	err=[]
+	exper=pd.read_csv("/home/wmc/Documents/plotfiles/optimization/data/experiment/RLp.csv")
 	# saber_overlay=pd.read_csv("lf_matching.csv")
 	for r in rep:
 		# res = vectorize(r)(xs)
@@ -335,16 +341,18 @@ def get_err(rep,plot=False):
 		err.append(np.sum(np.divide(np.abs(res-sig),sig)))
 	if plot:
 		with figure_wrapper(outf="L_compare_2pt.png",show=True) as fw:
-			fw.slogx(xs,1/sig,name="Given function")
+			fw.slogx(exper.f,exper.l,name="Experiment")
+			# fw.slogx(xs,1/sig,name="Given function")
 			# fw.plot2(xs,1/sig,sig,xlab="Frequency (Hz)",ylab1="L(f)",ylab2="1/L(f)",name="Original function")
 			# for i,a in enumerate(approx):
-			fw.slogx(xs,1/approx[0],name="Taylor series approximation")
-			fw.slogx(xs,1/approx[1],name="Two-Point Pade approximation")
+			# fw.slogx(xs,1/approx[0],name="Taylor series approximation")
+			fw.slogx(xs,1e9/approx[1],name="Two-Point Pade approximation")
 				# fw.plot2(xs,1/a,a,xlab="Frequency (Hz)",ylab1="L(f)",ylab2="$L^{-1}(f)$",name=f"Approximation {i}")
 			# linv = [1/l for l in saber_overlay.l]
 			# fw.plot2(saber_overlay.f,saber_overlay.l,linv, name="From Saber")
-			fw.ylim=(1e-9,3e-8)
-			fw.xlim=(10,1e9)
+			fw.ylim=(1,30)
+			fw.xlim=(1e3,1e8)
+			fw.set_labels("Frequency (Hz)","Inductance (nH)")
 			# fw.fig.axis.set_xscale('log')
 			fw.set_fontsize(15)
 	return err
@@ -353,9 +361,10 @@ def separate(rep:Pade):
 	# mat = zeros((len(rep.denom)-1,len(rep.denom)-1),dtype=np.complex64)
 	roots = rep.denom.get_roots()
 	K=[]
+	# print(rep.denom)
 	for r in roots.coeff:
-		temp = synth_div(rep.denom,r)
-		K.append(rep.num(r)/temp(r))
+		temp = synth_div(rep.denom,r)(r)
+		K.append(rep.num(r)/temp)
 	out=Pade(Poly(K),roots) #pyright:ignore
 	out.k0=rep.k0
 	out.sep=True
@@ -368,43 +377,50 @@ def twopt(rep,start):
 	return inner
 def create_approx(x):
 		x0=x
-		x1=1e9
-		l=lambda s:L(s)#-L(x1)
+		x1=1e6
+		l=lambda s:L(s)-L(x1)
 		derivs=take_derivs(l,x0,3,40)
-		taylor=Poly(derivs[::-1]).recenter(x0)
+		# print("before recenter:")
+		taylor=Poly(derivs[::-1])
+		# print(taylor)
+		taylor=taylor.recenter(x0)
+		# print(taylor)
 		l1=lambda s:L(s)-L(x1)
 		derivs=take_derivs(l1,x0,3,40)
 		taylor2=Poly(derivs[::-1]).recenter(x0)
 		p=solve_system(taylor2,1,2)
+		p.k0=L(x1)
+		# print("Before seperating:")
 		# print(p)
 		s=separate(p)
+		# print("After seperating:")
 		# print(s)
 		s.k0=L(x1)
-		# p.k0=L(x1)
 		s.sep=True
 		return s,taylor
 
 def time_domain(rep:Pade):
 	rep.freq_domain=False
-	rep.num.coeff = [n*100 for n in rep.num.coeff]
+	# rep.num.coeff = [n*100 for n in rep.num.coeff]
 	# rep.denom.coeff = [n*100 for n in rep.denom.coeff]
-	print(rep)
-	with open("l_t_latex.txt",'w') as f:
-		f.write(rep.to_latex())
-		f.write("\n")
-		rep.freq_domain = True
-		f.write(rep.to_latex())
-		rep.freq_domain=False
+	# print(rep)
+	# with open("l_t_latex.txt",'w') as f:
+	# 	f.write(rep.to_latex())
+	# 	f.write("\n")
+	# 	rep.freq_domain = True
+	# 	f.write(rep.to_latex())
+	# 	rep.freq_domain=False
 	ts=np.arange(0,1e-4,1e-8)
 	xs=1/np.vectorize(rep)(ts)
 	ts=ts*1e6
-	xs=xs*1e3
+	xs=xs*1e9
 	with figure_wrapper("L_time_domain.png", show=True) as fw:
 		fw.plot(ts,xs)
+		fw.autoscale=True
 		fw.set_xlim(0,1e2)
-		fw.set_ylim(-6,2.6)
-		fw.set_labels("Time (us)","Inductance (mH)")
-		fw.set_title("Time-Domain Inductance response (100K)")
+		# fw.set_ylim(-6,2.6)
+		fw.set_labels("Time (us)","Inductance (nH)")
+		fw.set_title("Time-Domain Inductance response")
 		fw.set_fontsize(15)
 
 if __name__=="__main__":
@@ -414,18 +430,22 @@ if __name__=="__main__":
 	# best_approx=Pade(Poly([]),Poly([]))
 	# xs = np.linspace(1,12,12)
 	# df=pd.DataFrame(0,index=xs,columns=['err','pow'])
-	s,p=create_approx(1e6)
+	s,p=create_approx(1e4)
 	# best_approx=s
 	# print(best_approx.to_latex())
 	s_shifted = deepcopy(s)
 	s_shifted.num.coeff = [k*200 for k in s.num.coeff]
 	s_shifted.denom.coeff = [k*100 for k in s.denom.coeff]
-	test_f = [1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10]
+	# test_f = [1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10]
 	fbase=np.linspace(1,10,10)
+	f3=fbase*1e3
 	f4=fbase*1e4
 	f5=fbase*1e5
 	f6=fbase*1e6
-	fs=np.append(f4,np.append(f5,f6))
+	f7=fbase*1e7
+	# fs=np.append(f3,np.append(f4,np.append(f5,np.append(f6,f7))))
+	fs=reduce(np.append,[f3,f4,f5,f6,f7])
+	print(fs)
 	# ls=tuple(map(lambda s:1/best_approx(s),fs))
 	# ls = [1e9/best_approx(f).real for f in fs]
 	# pd.DataFrame(data={'f':fs,'l':ls}).to_csv("real_lf.csv")
@@ -437,9 +457,11 @@ if __name__=="__main__":
 		df.at[freq,'L']=a
 		df.at[freq,'H']=b
 		df.at[freq,'delta']=abs(a-b)/a*100
-	print(df)
+	# print(df)
+	print(s)
 	df.to_csv("inductances.csv")
 	# time_domain(best_approx)
 	# print(s.num.over_coeff)
 	# print(s.denom.over_coeff)
-	get_err([p,s],True)
+	# time_domain(s)
+	# get_err([p,s],True)

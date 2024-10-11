@@ -37,6 +37,14 @@ class Poly:
 		for i in range(term):
 			out.coeff[i] = self.coeff[i]*(term-i)
 		return out
+
+	def integ(self):
+		out = Poly([0.]*(len(self)+1))
+		term = len(self)
+		for i in range(term):
+			out.coeff[i]=self.coeff[i]/(term-i)
+		out.coeff[-1]=0
+		return out
 		
 	def get_roots(self) -> 'Poly':
 		if self.saved_as_roots:
@@ -222,6 +230,7 @@ def synth_div(p:Poly, z:float):
 	for c in p.coeff[1:-1]:
 		res.coeff.append(last*z+c)
 		last = res.coeff[-1]
+	# print(res)
 	return res
 
 	

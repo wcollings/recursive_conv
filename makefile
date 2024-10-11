@@ -3,10 +3,10 @@ cc=gcc
 CFLAGS=-I$(IDIR) -fPIC 
 dllflags=-static-libgcc
 LIBS=-lm
-_DEPS=pade.h sara.h poly.h linear.h deriv.h interpolate.h central.h saber.h
+_DEPS=pade.h sara.h poly.h linear.h deriv.h interpolate.h central.h hash_table.h
 DEPS=$(patsubst %,$(IDIR)/%,$(_DEPS))
 ODIR=obj
-_OBJ=pade.o sara.o poly.o linear.o deriv.o interpolate.o saber.o log.o
+_OBJ=pade.o sara.o poly.o linear.o deriv.o interpolate.o saber.o hash_table.o
 OBJ=$(patsubst %,$(ODIR)/%,$(_OBJ))
 #cc=x86_64-w64-mingw32-gcc
 
@@ -22,6 +22,8 @@ sara_lib:$(OBJ)
 	$(cc) -shared -o libSARA.so $^ $(CFLAGS) $(LIBS)
 
 saber:$(OBJ) src/saber.c
+	$(cc) -Wall -c -o obj/saber.o src/saber.c $(LIBS) -I -Iinclude\ $(dllflags) 
+	$(cc) -o ind.dll obj/saber.o $(OBJ) $(dll_eflags) 
 	$(wcc) -Wall -c -o obj/saber.o src/saber.c $(LIBS) -I -Iinclude\ $(dllflags) 
 	$(wcc) -o ind.dll $(OBJ) $(dll_eflags) 
 

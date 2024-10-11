@@ -19,6 +19,9 @@ interp alias {} c* {} math::complexnumbers::*
 interp alias {} c/ {} math::complexnumbers::/
 interp alias {} cpow {} math::complexnumbers::pow
 
+proc f {a} {
+	return [format "%1.6e" $a]
+}
 
 proc fac {n} {
 	if { $n <= 1} {
@@ -123,20 +126,21 @@ proc SARA:q1 {sigma_i delta_n n} {
 	if {[real $delta_n] == 0} {
 		return $delta_n;
 	}
-	# set phi [SARA:Phi $sigma_i $delta_n]
+	set phi [SARA:Phi $sigma_i $delta_n]
 	set zi [SARA:zeta $sigma_i $delta_n]
 	set c1 [complex 1 0]
 	set c1n [complex -1 0] 
 	set c2 [complex 2 0]
 	switch $n {
 	0 	{
-			return [c* [c/ $delta_n [c* $zi $zi]] [c- [c_exp [c* $sigma_i $delta_n]] $zi]]
-			# return [* [/ $delta_n [pow $zi $c2]] [+ $c1n [+ $zi $phi]]]
+		   return [c* [c/ $delta_n [cpow $zi $c2]] [c* $c2 [c- $zi $c1]]]
+			# return [c* [c/ $delta_n [c* $zi $zi]] [c- [c_exp [c* $sigma_i $delta_n]] $zi]]
+			# return [c* [c/ $delta_n [cpow $zi $c2]] [c- $zi [c+ $phi $c1]]]
 		# return [expr {$delta_n/[pow $zi 2]*[-1+$zi+$phi]}]			;# supposed to be cpow
 		}
 	1	{
-			return $delta_n
-			# return [* [/ $delta_n [pow $zi $c2]] [* [- $c1 [+ $c1 $zi]] $phi]]
+			# return $delta_n
+			return [c* [c/ $delta_n [cpow $zi $c2]] [c- $c1 [c* [c+ $c1 $zi] $phi]]]
 		# return [expr {$delta_n/[pow $zi 2]*[1-[1+$zi]*$phi]}] 		;# supposed to be cpow
 		}
 	}
@@ -211,7 +215,7 @@ proc SARA:Accept {instance time input} {
 	set tempList [lrange [linsert $solver($instance,"tt") 0 $delta_n] 0 [expr {$order+1}]]
 	set solver($instance,"tt") $tempList
 	set solver($instance,"prev_time") $time
-	puts -nonewline $fp "[real $currx],"
+	puts -nonewline $fp "[f [real $currx]],"
 
 	set final [c* $SARA($instance,"k0") $currx]
 	
@@ -228,27 +232,29 @@ proc SARA:Accept {instance time input} {
 			set temp [c+ $temp [c* $a [c* $q [lindex $solver($instance,"xx") $j]]]]
 		}
 		set solver($instance,"yy") [lreplace $solver($instance,"yy") $i $i $temp]
-		puts -nonewline $fp "[real $temp],"
+		puts -nonewline $fp "[f [real $temp]],"
 		set final [c+ $final $temp]
 	}
 	set solver($instance,"xx_Prev") $input
 	set solver($instance,"yy_Final") $final
-	puts $fp [real $final]
+	puts $fp [f [real $final]]
 }
 
-SARA:Init "inst" 279695688.23288864 0 -740340728373193.2 152205548356904.16 -740340728373193.2 -152205548356904.16 0 0 0 0 -2923683.340113021 3792673.1864589 -2923683.340113021 -3792673.1864589 0 0 0 0 
+SARA:Init "inst" 2.820623e+08 0.000000e+00 -7.559814e+14 2.900125e+14 -7.559814e+14 -2.900125e+14  0 0  0 0 -3.095019e+06 4.534478e+06 -3.095019e+06 -4.534478e+06  0 0  0 0
+# SARA:Init "inst" 279695688.23288864 0 -740340728373193.2 152205548356904.16 -740340728373193.2 -152205548356904.16 0 0 0 0 -2923683.340113021 3792673.1864589 -2923683.340113021 -3792673.1864589 0 0 0 0 
 set fp [open "output.csv" w]
-puts $fp "t,v,dv,y0,y1,out"
-set pi 3.14
-set freq 1e6
-set tstep [expr {1/$freq/20}]
-set tend [expr {$tstep * 999}]
-for {set t 0} {$t < $tend } {set t [expr {$t+$tstep}]} {
+puts $fp "t,v,dv,y0,y1,il"
+for {set i 0} {$i < 4000 } {incr i} {
 	# set t [expr {$i+$step}]
 	# set t [expr {$i*$step}]
-	set tau [expr {2*$freq*$t*$pi}]
-	set v [real [ccos [complex $tau 0]]]
+	set time [expr {$i * 1e-9}]
+	set scaling [expr {exp(-5e5 * $time)}]
+	set arg [complex [expr {$time * 1e7}] 0]
+	set cterm [real [ccos $arg]]
+	set v [expr {$cterm * $scaling}]
 	# set i [real [SARA:Accept "inst" $tau $v]]
-	puts -nonewline $fp "$t,$v,"
-	SARA:Accept "inst" $t $v
+	puts -nonewline $fp "[f $time],[f $v],"
+	SARA:Accept "inst" $time $v
 }
+# parray SARA
+# parray solver
