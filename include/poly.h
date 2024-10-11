@@ -24,6 +24,7 @@ enum values_type_sel { Roots, Vals};
 struct Polynomial_t {
 	int num_terms;
 	enum values_type_sel tp;
+	prec_c_t coeff;
 	prec_c_t * terms; /* The terms are in highest-order to lowest-order*/
 };
 
