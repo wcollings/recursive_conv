@@ -1,5 +1,6 @@
 #include "../include/log.h"
 
+FILE * lf;
 void log_init(char * log_name){
 	lf=fopen(log_name,"a");
 	fprintf(lf,"Log opened\n");

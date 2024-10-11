@@ -47,14 +47,6 @@ void solver_free(struct Solver_t * self) {
 	free(self);
 }
 
-void solver_free(struct Solver_t * self) {
-	pade_free(self->eqs);
-	free(self->tt);
-	free(self->xx);
-	free(self->yy);
-	free(self);
-}
-
 /*
  * Calculates $\zeta_{i,n}$
  * `i`: s_i
