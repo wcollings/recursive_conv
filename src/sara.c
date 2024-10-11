@@ -268,7 +268,7 @@ prec_t do_step(prec_t inpt, prec_t curr_t) {
 	solv = read_solver("solv_obj_save.bin");
 	solv->num_steps++;
 	write_solver(solv,"solv_obj_save.bin");
-	free(solv);
+	solver_free(solv);
 	return res;
 }
 prec_t do_accept(prec_t inpt, prec_t curr_t) {
