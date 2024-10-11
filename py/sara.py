@@ -51,10 +51,10 @@ class Solver:
 			self.q=q4
 
 	def __repr__(self):
-		s=f"""{self.num_iter} iterations, final state variables are:
-			{self.prev_values[self.idxs.index('y')][-1]}
-			{len(self.prev_values[0])} y0's
-			{len(self.prev_values[1])} y1's
+		s=f"""{self.num_iter} iterations. Equation was:
+			K0={self.k0}
+			K={self.K}
+			s={self.s}
 			"""
 		return s
 	def update(self,t,x):
