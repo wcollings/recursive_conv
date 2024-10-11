@@ -41,6 +41,7 @@ struct Solver_t {
 	void (*cb)(struct Solver_t *, double res); /* A callback function (optional) for printing intermediate results etc.*/
 };
 
+extern struct Solver_t solvers[10];
 prec_c_t q1(prec_c_t,prec_c_t,int);
 prec_c_t q2(prec_c_t,prec_c_t,int);
 prec_c_t q3(prec_c_t,prec_c_t,int);

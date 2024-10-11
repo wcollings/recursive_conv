@@ -18,7 +18,7 @@
 #define Kstart 3
 #define sstart 11
 
-double do_setup(double * in) {
+struct Solver_t * do_setup(double * in) {
 	int order=4;
 	struct Solver_t * SOLV=malloc(sizeof(struct Solver_t));
 	prec_t * k_terms;
@@ -62,8 +62,8 @@ double do_setup(double * in) {
 				  break;
 		default: SOLV->qq=q2;
 	}
-	write_solver(SOLV,"solv_obj_save.bin");
-	return 0;
+	/* write_solver(SOLV,"solv_obj_save.bin"); */
+	return SOLV;
 };
 
 void IND(
@@ -83,8 +83,10 @@ void IND(
 	if (nout[1] < nout[0]) {
 		return;
 	}
+	struct Solver_t * solv=&solvers[0];
 	switch ((int)JOB) {
-		case SETUP: iL=do_setup(&inp[1]);
+		case SETUP: solv=do_setup(&inp[1]);
+						solvers[0]=*solv;
 						nout[0]=1;
 						iL = 1;
 						break;
