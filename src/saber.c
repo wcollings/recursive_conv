@@ -4,7 +4,6 @@
 #include "../include/sara.h"
 #include "../include/poly.h"
 #include "../include/saber.h"
-/* #include <saberApi.h> */
 #define JOB inp[0]
 #define SETUP 1
 #define STEP 2
@@ -81,7 +80,7 @@ void IND(
 	nout[0]=1;
 	switch ((int)JOB) {
 		case SETUP: iL=do_setup(&inp[1]);
-						nout[0]=0;
+						iL=1;
 						break;
 		case STEP: iL=do_step(vl,t);
 					  break;

@@ -22,7 +22,7 @@ sara_lib:$(OBJ)
 	$(cc) -shared -o libSARA.so $^ $(CFLAGS) $(LIBS)
 
 saber:$(OBJ) src/saber.c
-	$(cc) -Wall -c -o obj/saber.o src/saber.c $(LIBS) -I -Iinclude\ -D ADD_EXPORTS 
+	$(cc) -Wall -c -o obj/saber.o src/saber.c $(LIBS) -I -Iinclude\ -D ADD_EXPORTS
 	$(cc) -o ind.dll $(OBJ) -s -shared -Wl,--subsystem,windows -static-libgcc
 
 .phony: clean

@@ -37,6 +37,14 @@ struct Solver_t * solver_init(int order,struct Pade_t * eq) {
 	return self;
 }
 
+void solver_free(struct Solver_t * self) {
+	pade_free(self->eqs);
+	free(self->tt);
+	free(self->xx);
+	free(self->yy);
+	free(self);
+}
+
 /*
  * Calculates $\zeta_{i,n}$
  * `i`: s_i
@@ -183,7 +191,7 @@ prec_t do_step(prec_t inpt, prec_t curr_t) {
 	solv = read_solver("solv_obj_save.bin");
 	solv->num_steps++;
 	write_solver(solv,"solv_obj_save.bin");
-	free(solv);
+	solver_free(solv);
 	return res;
 }
 prec_t do_accept(prec_t inpt, prec_t curr_t) {
@@ -191,7 +199,7 @@ prec_t do_accept(prec_t inpt, prec_t curr_t) {
 	solv->num_calls++;
 	prec_t res=step(solv,inpt,curr_t);
 	write_solver(solv,"solv_obj_save.bin");
-	free(solv);
+	solver_free(solv);
 	return res;
 }
 
