@@ -170,7 +170,7 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	}
 	final += temp;
 	//end of first iteration
-	
+
 	for (int i=0; i < SOLV->head.order - 1; ++i) {
 		prec_t delta_n=SOLV->tt[i];
 		temp=0;

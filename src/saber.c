@@ -4,6 +4,8 @@
 #include "../include/sara.h"
 #include "../include/poly.h"
 #include "../include/saber.h"
+#include "../include/log.h"
+
 #define JOB inp[0]
 #define SETUP 1
 #define STEP 2
@@ -43,8 +45,9 @@ struct Solver_t * do_setup(double * in) {
 		denom->terms[i]=s_terms[idx]+s_terms[idx+1]*I;
 	}
 	struct Pade_t * pade=pade_init_poly(num,denom);
-	pade->offset=in[0]+in[1]*I;
+	pade->offset=in[1]+in[2]*I;
 	SOLV->head.order=order;
+	SOLV->head.mode=(int)in[0];
 	SOLV->eqs=pade;
 	SOLV->curr_t=0;
 	SOLV->curr_x=0;
@@ -67,41 +70,66 @@ struct Solver_t * do_setup(double * in) {
 };
 
 void IND(
-        double* inp, 
-        int*   ninp,
+        double* inp, 	//used
+        int*   ninp,	//used
         int*   ifl,
         int*   nifl,
-        double* out,
-        int*   nout,
+        double* out,	//used
+        int*   nout,	//used
         int*   ofl,
         int*   nofl,
-        double* aundef,
+        double* aundef,	//used
         int*   ier
 		  )
-{
+{	char printThis[100];
+	char isUndef;
+	log_init("log.txt");
 	nout[0]=1;
 	if (nout[1] < nout[0]) {
+		log_msg("nout[1] < nout[0]");
+		log_close();
 		return;
 	}
+	if (ninp[0] != 20) {
+		snprintf(printThis,100, "ninp[0] != 20, instead = %d", ninp[0]);
+		log_msg(printThis);
+	}else {
+		log_msg("ninp[0] == 20");
+	}
+
+	
+	log_msg("Checking for undef");
+	for(int i=0; i<ninp[0]; i++)
+	{	
+		isUndef = inp[i] == aundef[0]? 'T':'F';
+		snprintf(printThis,100, "inp[%d] undefined: %c", i,isUndef);
+		log_msg(printThis);
+	}
+	
 	struct Solver_t * solv=&solvers[0];
+	snprintf(printThis,100, "Called with arg %d", (int)JOB);
+	log_msg(printThis);
 	switch ((int)JOB) {
 		case SETUP: solv=do_setup(&inp[1]);
+		log_msg("do_setup");
 						solvers[0]=*solv;
 						nout[0]=1;
 						iL = 1;
 						break;
-		case STEP: iL=do_step(vl,t);
-		printf("step");
-						//iL=0;
+		case STEP: //iL=step(solv,vl,t);
+		log_msg("step");
+						iL=0;
 					  break;
-		case ACCEPT: iL=do_accept(vl,t);
-		printf("accept");
-						//iL=0;
+		case ACCEPT: //iL=accept(solv,vl,t);
+		log_msg("accept");
+						iL=0;
 					  break;
-		default: iL=do_step(vl,t);
-		printf("default - step");
-						//iL=0;
+		default: //iL=step(solv,vl,t);
+		log_msg("default - step");
+						iL=0;
 					  break;
 	}
+	log_msg("Closing log");
+	log_close();
 	return;
 }
