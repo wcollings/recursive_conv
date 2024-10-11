@@ -17,7 +17,7 @@ extern "C"
 /* Declare our Add function using the above definitions. */
 void IND(double* inp,int* ninp,int* ifl,int* nifl,double* out,int* nout,int *ofl,int *nofl,double *aundef,int *ier);
 /* ADDAPI void ADDCALL IND(double* inp,int* ninp,int* ifl,int* nifl,double* out,int* nout,int *ofl,int *nofl,double *aundef,int *ier); */
-double do_setup(double * in);
+struct Solver_t * do_setup(double * in);
 
 
 #ifdef __cplusplus
