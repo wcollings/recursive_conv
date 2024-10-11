@@ -10,6 +10,7 @@
 #include "../include/pade.h"
 #include "../include/interpolate.h"
 #define MIN(a,b) (a<b?a:b)
+struct Solver_t solvers[10];
 
 struct Solver_t * solver_init(int order,struct Pade_t * eq,int mode) {
 	struct Solver_t * self = malloc(sizeof(struct Solver_t));
@@ -35,6 +36,7 @@ struct Solver_t * solver_init(int order,struct Pade_t * eq,int mode) {
 				  break;
 		default: self->qq=q2;
 	}
+	solvers[0]=*self;
 	return self;
 }
 void solver_free(struct Solver_t * self) {
@@ -134,7 +136,49 @@ void shift_c(prec_c_t * arr,int num_ele) {
 	}
 }
 
+// TODO: make this not save!
 prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
+	shift(SOLV->tt,SOLV->head.order);
+	SOLV->tt[0]=curr_t-SOLV->curr_t;
+	SOLV->curr_t=curr_t;
+	prec_t new_x;
+	if (SOLV->head.mode==INDUCTANCE) {
+		prec_t last_x=SOLV->curr_x;
+		prec_t integ = SOLV->tt[0]*((last_x+inpt)/2);
+		prec_t new_x = SOLV->xx[0]+integ;
+	} else {
+		new_x = inpt;
+	}
+	shift(SOLV->xx,SOLV->head.order);
+	SOLV->xx[0]=new_x;
+	SOLV->curr_x=inpt;
+
+	prec_c_t temp;
+	prec_c_t final=SOLV->eqs->offset*new_x;
+	for (int i=0; i < SOLV->head.order; ++i) {
+		prec_t delta_n=SOLV->tt[i];
+		temp=0;
+		prec_c_t sigma_i=SOLV->eqs->denom->terms[i];
+		prec_c_t Ki=SOLV->eqs->num->terms[i];
+		temp=SOLV->yy[i]*Phi(sigma_i,delta_n);
+		for (int j=0; j <SOLV->head.order; ++j) {
+			// calculate the q terms
+			prec_c_t q=SOLV->qq(sigma_i,delta_n,j);
+			temp+=Ki*q*SOLV->xx[j];
+		}
+		SOLV->yy[i]=temp;
+		final += temp;
+	}
+	/* int n=SOLV->eqs->num->num_terms; */
+	/* SOLV->yy[n] = final; */
+	if (SOLV->cb != NULL) {
+		(*SOLV->cb)(SOLV, creal(final));
+	}
+	return creal(final);
+}
+
+
+prec_t accept(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	shift(SOLV->tt,SOLV->head.order);
 	SOLV->tt[0]=curr_t-SOLV->curr_t;
 	SOLV->curr_t=curr_t;
@@ -237,6 +281,18 @@ prec_t do_accept(prec_t inpt, prec_t curr_t) {
  */
 void write_solver(struct Solver_t * s,char* fname) {
 	FILE * fp = fopen(fname,"wb");
+	printf("Mode is %d\n",s->head.mode);
+	printf("Order is %d\n",s->head.order);
+	union{
+	struct {
+	unsigned int order: 31;
+	unsigned int mode: 1;
+	} head;
+	uint32_t field;
+	} field;
+	field.head.order=s->head.order;
+	field.head.mode=s->head.mode;
+	printf("Field is 0x%.8X\n",field.field);
 	fwrite(&s->head,sizeof(int32_t),1,fp); 
 	int num_terms=s->eqs->num->num_terms;
 	/* fwrite(&num_terms,sizeof(int),1,fp);  */
