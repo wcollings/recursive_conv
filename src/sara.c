@@ -139,34 +139,52 @@ void shift_c(prec_c_t * arr,int num_ele) {
 // TODO: make this not save!
 prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	shift(SOLV->tt,SOLV->head.order);
-	SOLV->tt[0]=curr_t-SOLV->curr_t;
-	SOLV->curr_t=curr_t;
+	//SOLV->tt[0]=curr_t-SOLV->curr_t;
+	double curr_dt = curr_t - SOLV->curr_t;
+	//SOLV->curr_t=curr_t;
 	prec_t new_x;
 	if (SOLV->head.mode==INDUCTANCE) {
 		prec_t last_x=SOLV->curr_x;
-		prec_t integ = SOLV->tt[0]*((last_x+inpt)/2);
+		prec_t integ = curr_dt*((last_x+inpt)/2);
 		prec_t new_x = SOLV->xx[0]+integ;
 	} else {
 		new_x = inpt;
 	}
-	shift(SOLV->xx,SOLV->head.order);
-	SOLV->xx[0]=new_x;
-	SOLV->curr_x=inpt;
+	//shift(SOLV->xx,SOLV->head.order);
+	//SOLV->xx[0]=new_x;
+	//SOLV->curr_x=inpt;
 
-	prec_c_t temp;
+	//first iteration, since new values have not been saved to SOLV
+	prec_c_t temp = 0;
 	prec_c_t final=SOLV->eqs->offset*new_x;
-	for (int i=0; i < SOLV->head.order; ++i) {
+	prec_t delta_n=curr_dt;
+	prec_c_t sigma_i=SOLV->eqs->denom->terms[0];
+	prec_c_t Ki=SOLV->eqs->num->terms[0];	
+	temp=SOLV->yy[0]*Phi(sigma_i,delta_n);
+	// calculate the q terms
+	prec_c_t q=SOLV->qq(sigma_i,delta_n,0);
+	temp+=Ki*q*new_x;
+	for (int j=0; j <SOLV->head.order - 1; ++j) {
+		prec_c_t q=SOLV->qq(sigma_i,delta_n,j+1);
+		temp+=Ki*q*SOLV->xx[j];
+	}
+	final += temp;
+	//end of first iteration
+	
+	for (int i=0; i < SOLV->head.order - 1; ++i) {
 		prec_t delta_n=SOLV->tt[i];
 		temp=0;
-		prec_c_t sigma_i=SOLV->eqs->denom->terms[i];
-		prec_c_t Ki=SOLV->eqs->num->terms[i];
-		temp=SOLV->yy[i]*Phi(sigma_i,delta_n);
-		for (int j=0; j <SOLV->head.order; ++j) {
+		prec_c_t sigma_i=SOLV->eqs->denom->terms[i+1];
+		prec_c_t Ki=SOLV->eqs->num->terms[i+1];
+		temp=SOLV->yy[i+1]*Phi(sigma_i,delta_n);
+		prec_c_t q=SOLV->qq(sigma_i,delta_n,0);
+		temp+=Ki*q*new_x;
+		for (int j=0; j <SOLV->head.order - 1; ++j) {
 			// calculate the q terms
-			prec_c_t q=SOLV->qq(sigma_i,delta_n,j);
+			prec_c_t q=SOLV->qq(sigma_i,delta_n,j+1);
 			temp+=Ki*q*SOLV->xx[j];
 		}
-		SOLV->yy[i]=temp;
+		//SOLV->yy[i]=temp;
 		final += temp;
 	}
 	/* int n=SOLV->eqs->num->num_terms; */
