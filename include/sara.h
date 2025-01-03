@@ -69,6 +69,8 @@ void shift(prec_t * arr,int num_ele);
  * `inpt`: The state variable (likey voltage or current) at the next time step
 */
 prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t);
+
+prec_t accept(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t);
 /*
  * Params:
  *  - current time
