@@ -1,4 +1,4 @@
-# SARA_v6
+# SARA_v7
 # How this is going to work is, we'll have a "step" function
 # that computes the next value, but doesn't save it anywhere.
 # instead, it just returns the result and moves on. The solver
@@ -11,7 +11,7 @@
 package require math::complexnumbers
 namespace import ::math::complexnumbers::*
 
-proc SARA:Init {instance k0 k0j k1 kj1 k2 kj2 k3 kj3 k4 kj4 sig1 sigj1 sig2 sigj2 sig3 sigj3 sig4 sigj4 v_IC} {
+proc SARA:Init {instance impedanceFlag k0 k0j k1 kj1 k2 kj2 k3 kj3 k4 kj4 sig1 sigj1 sig2 sigj2 sig3 sigj3 sig4 sigj4 {v_IC 0}} {
     global SARA
     global solver
 	global outFile
@@ -30,6 +30,15 @@ proc SARA:Init {instance k0 k0j k1 kj1 k2 kj2 k3 kj3 k4 kj4 sig1 sigj1 sig2 sigj
 		incr i
 	}
     puts "Found order: $order"
+	if {impedanceFlag == 0}
+	{
+		puts "Using inductance calculations..."
+		set SARA($instance,"impedanceFlag") 0
+	}
+	else {
+		puts "Using impedance calculations..."
+		set SARA($instance,"impedanceFlag") 1
+	}
 	set SARA($instance,"order") $order
 	set SARA($instance,"k0") [complex $k0 $k0j]
 	set SARA($instance,"k1") [complex $k1 $kj1]
@@ -135,15 +144,48 @@ proc SARA:q2 {sigma_i delta_n n} {
 }
 
 proc SARA:Step {instance time input} {  
-	puts "step"
+	#puts "step"
     global SARA
     global solver
+	set impedanceFlag $SARA($instance,"impedanceFlag")
     set time [complex $time 0]
     set xx_Curr [complex $input 0]
     set delta_n [- $time $solver($instance,"prev_time")];      # delta_n = current_time - solver(last_recorded_time)
     set xx_Integ_Section [/ [* $delta_n [+ $xx_Curr $solver($instance,"xx_Prev")]] [complex 2 0]];    # integral from n-1 to n = delta_n * (x[n] + x[n-1]) / 2
     set xx_Integ_Full [+ $xx_Integ_Section [lindex $solver($instance,"xx_Integ") 0]];  	             # integral from 0 to n = xx_Integ (0 to n-1) + xx_Integ_Section (n-1 to n)
-    set order $SARA($instance,"order")
+	set order $SARA($instance,"order")
+	if {impedanceFlag == 0} {
+    	set final [* $xx_Integ_Full $SARA($instance,"k0")];       # first part of calculation: k0 * integral(x|0 to n)
+    	for {set i 1} {$i <= [+ $order 1]} {incr i} {
+			set sig_i $SARA($instance,"sig$i")
+			set k_i $SARA($instance,"k$i");                             # select appropriate k and sigma
+			set temp [* [lindex $solver($instance,"yy") [- $i 1]] [SARA:Phi $sig_i $delta_n]];        # lindex using $i-1 because $i starts from 1, not 0
+			set q_function "SARA:q$order"
+			set q [$q_function $sig_i $delta_n 0];                            # find the q value for time = n
+			set temp [+ $temp [* $k_i [* $q $xx_Integ_Full]]];        # calculate using most recent x integral, which is not stored
+			for {set j 1} {$j <= $order} {incr j} {
+				set q [$q_function $sig_i $delta_n $j];                       # $j starts from 1 since we already used q0 and need to do q1,q2,etc.
+				set temp [+ $temp [* $k_i [* $q [lindex $solver($instance,"xx_Integ") [- $j 1]]]]];     # use $j-1 since $j starts from 1
+        }
+        set final [+ $final $temp]
+    }
+	else {
+    	set final [* $xx_Curr $SARA($instance,"k0")];       # first part of calculation: k0 * integral(x|0 to n)
+    	for {set i 1} {$i <= [+ $order 1]} {incr i} {
+			set sig_i $SARA($instance,"sig$i")
+			set k_i $SARA($instance,"k$i");                             # select appropriate k and sigma
+			set temp [* [lindex $solver($instance,"yy") [- $i 1]] [SARA:Phi $sig_i $delta_n]];        # lindex using $i-1 because $i starts from 1, not 0
+			set q_function "SARA:q$order"
+			set q [$q_function $sig_i $delta_n 0];                            # find the q value for time = n
+			set temp [+ $temp [* $k_i [* $q $xx_Integ_Full]]];        # calculate using most recent x integral, which is not stored
+			for {set j 1} {$j <= $order} {incr j} {
+				set q [$q_function $sig_i $delta_n $j];                       # $j starts from 1 since we already used q0 and need to do q1,q2,etc.
+				set temp [+ $temp [* $k_i [* $q [lindex $solver($instance,"xx_Integ") [- $j 1]]]]];     # use $j-1 since $j starts from 1
+        }
+        set final [+ $final $temp]
+	}
+	}
+	set order $SARA($instance,"order")
     set final [* $xx_Integ_Full $SARA($instance,"k0")];       # first part of calculation: k0 * integral(x|0 to n)
     for {set i 1} {$i <= [+ $order 1]} {incr i} {
         set sig_i $SARA($instance,"sig$i")
@@ -162,7 +204,7 @@ proc SARA:Step {instance time input} {
 }
 
 proc SARA:Accept {instance time input} {
-	puts "accept"
+	#puts "accept"
     global SARA
     global solver
 	global outFile
