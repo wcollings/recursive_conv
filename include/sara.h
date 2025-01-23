@@ -41,7 +41,8 @@ struct Solver_t {
 	void (*cb)(struct Solver_t *, double res); /* A callback function (optional) for printing intermediate results etc.*/
 };
 
-extern struct Solver_t solvers[10];
+/* extern struct Solver_t solvers[10]; */
+extern struct Solver_t * SOLV;
 prec_c_t q1(prec_c_t,prec_c_t,int);
 prec_c_t q2(prec_c_t,prec_c_t,int);
 prec_c_t q3(prec_c_t,prec_c_t,int);
@@ -69,6 +70,7 @@ void shift(prec_t * arr,int num_ele);
  * `inpt`: The state variable (likey voltage or current) at the next time step
 */
 prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t);
+prec_t accept(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t);
 /*
  * Params:
  *  - current time

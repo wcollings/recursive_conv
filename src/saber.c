@@ -18,9 +18,11 @@
 #define Kstart 3
 #define sstart 11
 
-struct Solver_t * do_setup(double * in) {
+struct Solver_t * SOLV;
+void do_setup(double * in) {
+/* struct Solver_t * do_setup(double * in) { */
 	int order=4;
-	struct Solver_t * SOLV=malloc(sizeof(struct Solver_t));
+	SOLV=malloc(sizeof(struct Solver_t));
 	prec_t * k_terms;
 	k_terms=&in[Kstart];
 	prec_t * s_terms=&in[sstart];
@@ -43,29 +45,34 @@ struct Solver_t * do_setup(double * in) {
 		denom->terms[i]=s_terms[idx]+s_terms[idx+1]*I;
 	}
 	struct Pade_t * pade=pade_init_poly(num,denom);
-	pade->offset=in[0]+in[1]*I;
+	pade->offset=in[1]+in[2]*I;
 	SOLV->head.order=order;
+	SOLV->head.mode=(uint32_t)in[0];
 	SOLV->eqs=pade;
 	SOLV->curr_t=0;
 	SOLV->curr_x=0;
-	SOLV->tt=malloc(sizeof(prec_t)*order);
-	SOLV->xx=malloc(sizeof(prec_t)*order);
-	SOLV->yy=malloc(sizeof(prec_c_t)*order);
-	switch (order) {
-		case 1: SOLV->qq=q1;
-				  break;
-		case 2: SOLV->qq=q2;
-				  break;
-		case 3: SOLV->qq=q3;
-				  break;
-		case 4: SOLV->qq=q4;
-				  break;
-		default: SOLV->qq=q2;
-	}
+	SOLV->num_calls=0;
+	SOLV->num_steps=0;
+	SOLV->tt=calloc(order,sizeof(prec_t));
+	SOLV->xx=calloc(order,sizeof(prec_t));
+	SOLV->yy=calloc(order,sizeof(prec_c_t));
+	SOLV->qq=q2;
+	/* switch (order) { */
+	/* 	case 1: SOLV->qq=q1; */
+	/* 			  break; */
+	/* 	case 2: SOLV->qq=q2; */
+	/* 			  break; */
+	/* 	case 3: SOLV->qq=q3; */
+	/* 			  break; */
+	/* 	case 4: SOLV->qq=q4; */
+	/* 			  break; */
+	/* 	default: SOLV->qq=q2; */
+	/* } */
 	/* write_solver(SOLV,"solv_obj_save.bin"); */
-	return SOLV;
+	/* return SOLV; */
 };
 
+//SABER_FOREIGN_ROUTINE(IND) {
 void IND(
         double* inp, 
         int*   ninp,
@@ -79,27 +86,30 @@ void IND(
         int*   ier
 		  )
 {
+	int garbage;
+	/* char * part_name = C_NAME(cgetstr)(inp[1]); */
 	nout[0]=1;
 	if (nout[1] < nout[0]) {
 		return;
 	}
-	struct Solver_t * solv=&solvers[0];
 	switch ((int)JOB) {
-		case SETUP: solv=do_setup(&inp[1]);
-						solvers[0]=*solv;
+		case SETUP: do_setup(&inp[1]);
+						/* solvers[0]=*solv; */
 						nout[0]=1;
 						iL = 1;
 						break;
-		case STEP: iL=do_step(vl,t);
-		printf("step");
+		case STEP: iL=step(SOLV,vl,t);
+					garbage=1;
+		//printf("step");
 						//iL=0;
 					  break;
-		case ACCEPT: iL=do_accept(vl,t);
-		printf("accept");
+		case ACCEPT: iL=accept(SOLV,vl,t);
+					garbage=1;
+			//printf("accept");
 						//iL=0;
 					  break;
-		default: iL=do_step(vl,t);
-		printf("default - step");
+		default: iL=step(SOLV,vl,t);
+			//printf("default - step");
 						//iL=0;
 					  break;
 	}
