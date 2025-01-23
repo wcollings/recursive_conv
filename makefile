@@ -6,12 +6,12 @@ CFLAGS=-I$(IDIR) -fno-stack-protector -g
 dll_cflags=-DADD_EXPORTS -DGW32 -D_MSC_VER
 dll_eflags=-s -shared -Wl,--subsystem,windows -static-libgcc -DGW32
 LIBS=-lm
-_DEPS=pade.h sara.h poly.h linear.h deriv.h interpolate.h central.h saber.h
+_DEPS=pade.h sara.h poly.h linear.h deriv.h interpolate.h central.h log.h
 DEPS=$(patsubst %,$(IDIR)/%,$(_DEPS))
 ODIR=obj
-_OBJ=pade.o sara.o poly.o linear.o deriv.o interpolate.o saber.o log.o
+_OBJ=pade.o sara.o poly.o linear.o deriv.o interpolate.o saber.o hash_table.o
 OBJ=$(patsubst %,$(ODIR)/%,$(_OBJ))
-wcc=x86_64-w64-mingw32-gcc
+#cc=x86_64-w64-mingw32-gcc
 
 
 sara_test:main.c $(OBJ)

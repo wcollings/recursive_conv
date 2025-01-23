@@ -158,7 +158,8 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 		new_x = inpt;
 	}
 
-	prec_c_t temp;
+	//first iteration, since new values have not been saved to SOLV
+	prec_c_t temp = 0;
 	prec_c_t final=SOLV->eqs->offset*new_x;
 
 	prec_c_t outputs[4]={0,0,0,0};

@@ -4,6 +4,8 @@
 #include "../include/sara.h"
 #include "../include/poly.h"
 #include "../include/saber.h"
+#include "../include/log.h"
+
 #define JOB inp[0]
 #define SETUP 1
 #define STEP 2
@@ -46,6 +48,7 @@ void do_setup(double * in) {
 	}
 	struct Pade_t * pade=pade_init_poly(num,denom);
 	pade->offset=in[1]+in[2]*I;
+	pade->offset=in[1]+in[2]*I;
 	SOLV->head.order=order;
 	SOLV->head.mode=(uint32_t)in[0];
 	SOLV->eqs=pade;
@@ -74,15 +77,15 @@ void do_setup(double * in) {
 
 //SABER_FOREIGN_ROUTINE(IND) {
 void IND(
-        double* inp, 
-        int*   ninp,
+        double* inp, 	//used
+        int*   ninp,	//used
         int*   ifl,
         int*   nifl,
-        double* out,
-        int*   nout,
+        double* out,	//used
+        int*   nout,	//used
         int*   ofl,
         int*   nofl,
-        double* aundef,
+        double* aundef,	//used
         int*   ier
 		  )
 {
@@ -90,6 +93,8 @@ void IND(
 	/* char * part_name = C_NAME(cgetstr)(inp[1]); */
 	nout[0]=1;
 	if (nout[1] < nout[0]) {
+		log_msg("nout[1] < nout[0]");
+		log_close();
 		return;
 	}
 	switch ((int)JOB) {
@@ -113,5 +118,7 @@ void IND(
 						//iL=0;
 					  break;
 	}
+	log_msg("Closing log");
+	log_close();
 	return;
 }
