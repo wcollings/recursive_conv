@@ -142,7 +142,7 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	prec_t delta_n=curr_t-SOLV->curr_t;
 	prec_t new_x;
 	if (SOLV->head.mode==INDUCTANCE) {
-		prec_t last_x=curr_t;
+		prec_t last_x=SOLV->curr_x;
 		prec_t integ = delta_n*((last_x+inpt)/2);
 		prec_t new_x = SOLV->xx[0]+integ;
 	} else {
@@ -165,12 +165,11 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	}
 	// loop for j=1..n
 	for (int i=0; i < SOLV->head.order; ++i) {
-		prec_t delta_n=SOLV->tt[i];
 		prec_c_t sigma_i=SOLV->eqs->denom->terms[i];
 		prec_c_t Ki=SOLV->eqs->num->terms[i];
 		temp=0;
 		for (int j=1; j <SOLV->head.order; ++j) {
-			// calculate the q terms
+			prec_t delta_n=SOLV->tt[i];
 			prec_c_t q=SOLV->qq(sigma_i,delta_n,j);
 			temp+=Ki*q*SOLV->xx[j-1];
 		}
