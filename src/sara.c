@@ -87,28 +87,19 @@ prec_c_t q2(prec_c_t sigma_i,prec_c_t delta_n, int n) {
 	prec_c_t phi=Phi(sigma_i,delta_n);
 	prec_c_t zi=zeta(sigma_i,delta_n);
 
-	prec_c_t c1 = (delta_n+0*I)/cpow(zi,2);
-	prec_c_t z2 = cpow(zi,2);
+	prec_c_t c1 = (delta_n)/cpow(zi,2);
 	prec_c_t c2 = (zi-phi-1);
 	prec_c_t c3 = 1-(1+zi)*phi;
-	/* printf("zeta^2: %le + j%le\n",creal(z2),cimag(z2)); */
-	/* printf("C1: %le + j%le\n",creal(c1),cimag(c1)); */
-	/* printf("C2: %le + j%le\n",creal(c2),cimag(c2)); */
-	/* printf("q2,0= %le + j%le\n",creal(c1*c2),cimag(c1*c2)); */
-	/* printf("C3: %le + j%le\n",creal(c3),cimag(c3)); */
-	/* printf("q2,1= %le + j%le\n",creal(c1*c3),cimag(c1*c3)); */
 	if (delta_n==0) {
-		q=0;
-	}
-	else switch(n) {
+		return 0;
+	} else switch(n) {
 		/* case 0: q=delta_n/2; */
-		case 0: return delta_n/2;
+		case 0: return c1*(1-phi);
+		/* case 0: return delta_n/2; */
 		/* case 1: q=(delta_n/2)*(1-zi); */
-		case 1: return (delta_n/2)*(1-zi);
-		default: return delta_n/2;
+		case 1: return c1*(zi+phi-1);
+		default: return c1*(1-phi);
 	}
-	return q;
-
 }
 prec_c_t q3(prec_c_t sigma_i,prec_c_t delta_n,int n) {
 	prec_c_t q;
@@ -287,9 +278,9 @@ prec_t do_accept(prec_t inpt, prec_t curr_t) {
  * | order: 4
  * | num_calls: 2
  * | num_steps: 2
- * | K0: 16
- * | Ki: 16*order
- * | si: 16*order
+ * | K0: 16 (8+8j)
+ * | Ki: 16*order (8+8j)
+ * | si: 16*order (8+8j)
  * | t:  8
  * | x:  8
  * | tt: 8*order
