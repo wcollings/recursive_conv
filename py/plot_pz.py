@@ -1,5 +1,4 @@
 import numpy as np
-from plotting import figure_wrapper
 from matplotlib import pyplot as plt
 import pandas as pd
 from poly import Poly
@@ -53,13 +52,3 @@ if __name__=="__main__":
 	plt.ylabel("Admittance (S)")
 	plt.legend()
 	plt.show()
-	# with figure_wrapper(outf="Ybus.png",interactive=True) as fw:
-	# 	fw.slogx(freq,df.y,name="Experiment")
-	# 	fw.slogx(freq,h23(freq),name="Model")
-	# 	fw.set_labels("frequency (Hz)", "Admittance (Siemans)")
-	# 	fw.set_xlim(1e3,1.2e8)
-	# 	fw.set_ylim(-5,140)
-	# 	fw.set_fontsize(15)
-	# 	fw.make_legend=True
-	# 	# fw.ylabel("Admittance (Mho)")
-		# fw.grid(True)
