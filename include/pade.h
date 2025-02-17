@@ -10,8 +10,6 @@
 
 #include "central.h"
 #include "poly.h"
-#include "linear.h"
-#include "csv.h"
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
@@ -48,8 +46,6 @@ struct Pade_t * pade_init(prec_c_t *A, prec_c_t *B,int M, int N);
 struct Pade_t * pade_init_with_offset(prec_c_t *A, prec_c_t *B,int M, int N,prec_c_t offset);
 
 void pade_free(struct Pade_t * self);
-void pade_print(struct Pade_t * self);
-void pade_print_roots(struct Pade_t * self);
 
 /*
  * Initialize a Pade Approximant using two polynomials. 
@@ -61,13 +57,6 @@ struct Pade_t * pade_init_poly(struct Polynomial_t * num, struct Polynomial_t * 
  * Evaluate a Pade Approximant at a certain point
 */
 prec_c_t pade_eval(struct Pade_t * self, prec_c_t s);
-
-/*
- * Create a Pade approximant given a polynomial that hold the coefficients
- * of a series representation of an object.
- * with N elements in the polynomial, we create a Pade approximant R_{m,N-m}
-*/
-struct Pade_t * pade_create_fit(struct Polynomial_t * taylor,int m);
 
 /*
  * Perform Partial Fraction Decomposition on a given Pade Approximant

@@ -5,7 +5,6 @@
 #ifndef __CENTRAL_H__
 #define __CENTRAL_H__
 #include <complex.h>
-#include "log.h"
 
 #define USE_DOUBLE 1
 #if USE_DOUBLE

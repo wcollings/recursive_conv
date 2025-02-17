@@ -4,7 +4,6 @@
 #include "../include/sara.h"
 #include "../include/poly.h"
 #include "../include/saber.h"
-#include "../include/log.h"
 
 #define JOB inp[0]
 #define SETUP 1
@@ -22,7 +21,6 @@
 
 struct Solver_t * SOLV;
 void do_setup(double * in) {
-/* struct Solver_t * do_setup(double * in) { */
 	int order=4;
 	SOLV=malloc(sizeof(struct Solver_t));
 	prec_t * k_terms;
@@ -71,54 +69,35 @@ void do_setup(double * in) {
 	/* 			  break; */
 	/* 	default: SOLV->qq=q2; */
 	/* } */
-	/* write_solver(SOLV,"solv_obj_save.bin"); */
-	/* return SOLV; */
 };
 
-//SABER_FOREIGN_ROUTINE(IND) {
 void IND(
-        double* inp, 	//used
-        int*   ninp,	//used
+        double* inp,
+        int*   ninp,
         int*   ifl,
         int*   nifl,
-        double* out,	//used
-        int*   nout,	//used
+        double* out,
+        int*   nout,
         int*   ofl,
         int*   nofl,
-        double* aundef,	//used
+        double* aundef,
         int*   ier
 		  )
 {
-	int garbage;
-	/* char * part_name = C_NAME(cgetstr)(inp[1]); */
 	nout[0]=1;
 	if (nout[1] < nout[0]) {
-		log_msg("nout[1] < nout[0]");
-		log_close();
 		return;
 	}
 	switch ((int)JOB) {
 		case SETUP: do_setup(&inp[1]);
-						/* solvers[0]=*solv; */
 						nout[0]=1;
 						iL = 1;
 						break;
-		case STEP: iL=step(SOLV,vl,t);
-					garbage=1;
-		//printf("step");
-						//iL=0;
-					  break;
 		case ACCEPT: iL=accept(SOLV,vl,t);
-					garbage=1;
-			//printf("accept");
-						//iL=0;
 					  break;
+		case STEP:
 		default: iL=step(SOLV,vl,t);
-			//printf("default - step");
-						//iL=0;
 					  break;
 	}
-	log_msg("Closing log");
-	log_close();
 	return;
 }

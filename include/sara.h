@@ -15,14 +15,14 @@
  * we can compute that once and save it, then save the last actual time so that we can compute
  * the next time delta as well going forward.
  * `order`: int
- * `eqs`: Pade_t*
+ * `eqs`: Pade_t *
  * `curr_t`: prec_t
  * `curr_x`: prec_t
- * `tt`: prec_t[order]
- * `xx`: prec_t[order]
- *	`yy`: prec_c_t[order]
- *	`qq`: prec_c_t(*)(prec_c_t,prec_c_t,int)
- *	`cb`: void(*)(struct Solver_t*)
+ * `tt`: prec_t[[order]]
+ * `xx`: prec_t[[order]]
+ *	`yy`: prec_c_t[[order]]
+ *	`qq`: prec_c_t( * )(prec_c_t,prec_c_t,int)
+ *	`cb`: void( * )(struct Solver_t * )
 */
 struct Solver_t {
 	struct {
@@ -68,17 +68,16 @@ void shift(prec_t * arr,int num_ele);
  * Take a step in the time domain, advancing the solver by one time step
  * `SOLV`: an instance of the solver
  * `inpt`: The state variable (likey voltage or current) at the next time step
+ * `curr_t`: the simulation time
+ * RETURNS: the convolution result
 */
 prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t);
-prec_t accept(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t);
 /*
- * Params:
- *  - current time
- *  - voltage across part
+ * Once a final solution for the jacobian matrix has been found, lock in the final values
+ * `SOLV`: an instance of the solver
+ * `inpt`: The state variable (likey voltage or current) at the next time step
+ * `curr_t`: the simulation time
 */
-prec_t do_step(prec_t inpt, prec_t curr_t);
-prec_t do_accept(prec_t inpt, prec_t curr_t);
-void write_solver(struct Solver_t * s,char* fname);
-struct Solver_t * read_solver(char * fname);
+prec_t accept(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t);
 
 #endif
