@@ -71,6 +71,22 @@ void do_setup(double * in) {
 	/* } */
 };
 
+/* Need all these extra fields to interface correctly with their API
+ * `inp` The array of inputs. Note that the length and contents of this will vary with the required action.
+ *       The first element of this states what the required action is: 1 for init, 2 for step, 3 for accept.
+ *       God knows exporting more than one function from a DLL is impossible (sarcasm)
+ * `ninp` The number of inputs given, just in case you need that. Also used for passing strings somehow?
+ * `ifl`: Unused
+ * `nifl`: Unused, the number of elements in ifl
+ * `out`: the output array
+ * `nout`: the number of elements in the output array. It's already been decided for you, so if you need a different
+ *         number of inputs, you have to change this number, do nothing else, and return. Your function will then get
+ *         re-called with the correct number of outputs correctly allocated.
+ *`ofl`: unused
+ *`nofl`: the number elements in ofl
+ *`aundef`: the value used to indicate "undefined". You will be given this, so just copy it wherever you need it
+ *`ier`: unused
+*/
 void IND(
         double* inp,
         int*   ninp,
