@@ -63,15 +63,14 @@ struct Solver_t * solver_init(int order,struct Pade_t * eq, int mode);
  * `num_ele`: the size of the array
 */
 void shift(prec_t * arr,int num_ele);
-
 /*
- * Take a step in the time domain, advancing the solver by one time step
+ * When the solver is iterating, trying to find the next valid time step, this function is called.
+ * Calculate, but DO NOT STORE, the result of this next datapoint.
  * `SOLV`: an instance of the solver
  * `inpt`: The state variable (likey voltage or current) at the next time step
- * `curr_t`: the simulation time
- * RETURNS: the convolution result
 */
-prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t);
+void step(struct Solver_t * SOLV, prec_t inpt, float curr_t);
+
 /*
  * Once a final solution for the jacobian matrix has been found, lock in the final values
  * `SOLV`: an instance of the solver
