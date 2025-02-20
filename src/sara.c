@@ -3,7 +3,6 @@
  * Implements Recursive Convolution
  *
 */
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "../include/sara.h"
@@ -13,7 +12,6 @@
 struct Solver_t * solver_init(int order,struct Pade_t * eq,int mode) {
 	struct Solver_t * self = malloc(sizeof(struct Solver_t));
 	self->num_calls=0;
-	self->cb=NULL;
 	self->eqs=eq;
 	self->head.order=order;
 	self->head.mode=mode;
@@ -41,6 +39,10 @@ void solver_free(struct Solver_t * self) {
 	free(self);
 }
 
+/*
+ * If the simulation resets, or restarts, but the DLL isn't thrown out,
+ * we need to essentially detect that and reset ourselves
+*/
 void solver_reset_time(struct Solver_t * self) {
 	for (int i=0; i < self->head.order; ++i) {
 		self->tt[i]=0;
@@ -79,22 +81,13 @@ prec_c_t q1(prec_c_t sigma_i,prec_c_t delta_n,int n) {
 }
 
 prec_c_t q2(prec_c_t sigma_i,prec_c_t delta_n, int n) {
-	prec_c_t q;
-	prec_c_t phi=Phi(sigma_i,delta_n);
 	prec_c_t zi=zeta(sigma_i,delta_n);
-
-	prec_c_t c1 = (delta_n)/cpow(zi,2);
-	prec_c_t c2 = (zi-phi-1);
-	prec_c_t c3 = 1-(1+zi)*phi;
 	if (delta_n==0) {
 		return 0;
 	} else switch(n) {
-		/* case 0: q=delta_n/2; */
-		case 0: return c1*(1-phi);
-		/* case 0: return delta_n/2; */
-		/* case 1: q=(delta_n/2)*(1-zi); */
-		case 1: return c1*(zi+phi-1);
-		default: return c1*(1-phi);
+		default:
+		case 0: return delta_n/2;
+		case 1: return (delta_n/2)*(1-zi);
 	}
 }
 prec_c_t q3(prec_c_t sigma_i,prec_c_t delta_n,int n) {
@@ -124,7 +117,7 @@ void shift_c(prec_c_t * arr,int num_ele) {
 	}
 }
 
-prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
+prec_t step(struct Solver_t * SOLV, const prec_t inpt, const prec_t curr_t) {
 	SOLV->num_steps++;
 	if (curr_t < SOLV->curr_t) {
 		solver_reset_time(SOLV);
@@ -166,15 +159,10 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 		outputs[i]+=temp;
 		final += outputs[i];
 	}
-	/* int n=SOLV->eqs->num->num_terms; */
-	/* SOLV->yy[n] = final; */
-	if (SOLV->cb != NULL) {
-		(*SOLV->cb)(SOLV, creal(final));
-	}
 	return creal(final);
 }
 
-prec_t accept(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
+prec_t accept(struct Solver_t * SOLV, const prec_t inpt, const prec_t curr_t) {
 	SOLV->num_calls++;
 	shift(SOLV->tt,SOLV->head.order);
 	SOLV->tt[0]=curr_t-SOLV->curr_t;
@@ -206,11 +194,6 @@ prec_t accept(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 		}
 		SOLV->yy[i]=temp;
 		final += temp;
-	}
-	/* int n=SOLV->eqs->num->num_terms; */
-	/* SOLV->yy[n] = final; */
-	if (SOLV->cb != NULL) {
-		(*SOLV->cb)(SOLV, creal(final));
 	}
 	return creal(final);
 }

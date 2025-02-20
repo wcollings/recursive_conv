@@ -38,7 +38,6 @@ struct Solver_t {
 	prec_t * xx; /* previous input states */
 	prec_c_t * yy; /* previous output states */
 	prec_c_t (*qq)(prec_c_t,prec_c_t,int);
-	void (*cb)(struct Solver_t *, double res); /* A callback function (optional) for printing intermediate results etc.*/
 };
 
 /* extern struct Solver_t solvers[10]; */
@@ -69,7 +68,7 @@ void shift(prec_t * arr,int num_ele);
  * `SOLV`: an instance of the solver
  * `inpt`: The state variable (likey voltage or current) at the next time step
 */
-void step(struct Solver_t * SOLV, prec_t inpt, float curr_t);
+prec_t step(struct Solver_t * SOLV, prec_t inpt, float curr_t);
 
 /*
  * Once a final solution for the jacobian matrix has been found, lock in the final values

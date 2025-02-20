@@ -34,7 +34,6 @@ void do_setup(double * in) {
 			break;
 		}
 	}
-	printf("Found %d terms\n",order);
 	struct Polynomial_t * num=poly_init_bare(order);
 	struct Polynomial_t * denom=poly_init_bare(order);
 	num->terms=malloc(sizeof(prec_c_t)*order);
@@ -46,29 +45,7 @@ void do_setup(double * in) {
 	}
 	struct Pade_t * pade=pade_init_poly(num,denom);
 	pade->offset=in[1]+in[2]*I;
-	pade->offset=in[1]+in[2]*I;
-	SOLV->head.order=order;
-	SOLV->head.mode=(uint32_t)in[0];
-	SOLV->eqs=pade;
-	SOLV->curr_t=0;
-	SOLV->curr_x=0;
-	SOLV->num_calls=0;
-	SOLV->num_steps=0;
-	SOLV->tt=calloc(order,sizeof(prec_t));
-	SOLV->xx=calloc(order,sizeof(prec_t));
-	SOLV->yy=calloc(order,sizeof(prec_c_t));
-	SOLV->qq=q2;
-	/* switch (order) { */
-	/* 	case 1: SOLV->qq=q1; */
-	/* 			  break; */
-	/* 	case 2: SOLV->qq=q2; */
-	/* 			  break; */
-	/* 	case 3: SOLV->qq=q3; */
-	/* 			  break; */
-	/* 	case 4: SOLV->qq=q4; */
-	/* 			  break; */
-	/* 	default: SOLV->qq=q2; */
-	/* } */
+	SOLV=solver_init(order,pade,(uint32_t)in[0]);
 };
 
 /* Need all these extra fields to interface correctly with their API
