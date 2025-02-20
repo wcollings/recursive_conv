@@ -49,6 +49,8 @@ void solver_free(struct Solver_t * self) {
 
 void solver_reset_time(struct Solver_t * self) {
 	for (int i=0; i < self->head.order; ++i) {
+		self->curr_t=0;
+		self->curr_x=0;
 		self->tt[i]=0;
 		self->xx[i]=0;
 		self->yy[i]=0;
@@ -88,18 +90,23 @@ prec_c_t q2(prec_c_t sigma_i,prec_c_t delta_n, int n) {
 	prec_c_t zi=zeta(sigma_i,delta_n);
 
 	prec_c_t c1 = (delta_n)/cpow(zi,2);
-	prec_c_t c2 = (zi-phi-1);
+	prec_c_t c2 = (zi+phi-1);
 	prec_c_t c3 = 1-(1+zi)*phi;
+	prec_c_t out;
 	if (delta_n==0) {
 		return 0;
 	} else switch(n) {
-		/* case 0: q=delta_n/2; */
-		case 0: return c1*(1-phi);
-		/* case 0: return delta_n/2; */
-		/* case 1: q=(delta_n/2)*(1-zi); */
-		case 1: return c1*(zi+phi-1);
-		default: return c1*(1-phi);
+		case 0: 
+			out=delta_n/2;
+			break;
+		case 1:
+			out=(delta_n/2)*(1-zi);
+			break;
+		/* case 0: return c1*c2; */
+		/* case 1: return c1*c3; */
+		/* default: return c1*(1-phi); */
 	}
+	return out;
 }
 prec_c_t q3(prec_c_t sigma_i,prec_c_t delta_n,int n) {
 	prec_c_t q;
@@ -136,21 +143,21 @@ void shift_c(prec_c_t * arr,int num_ele) {
 
 prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	SOLV->num_steps++;
-	if (curr_t < SOLV->curr_t) {
+	if (curr_t == 0) {
 		solver_reset_time(SOLV);
 	}
 	prec_t delta_n=curr_t-SOLV->curr_t;
 	prec_t new_x;
 	if (SOLV->head.mode==INDUCTANCE) {
 		prec_t last_x=SOLV->curr_x;
-		prec_t integ = delta_n*((last_x+inpt)/2);
-		prec_t new_x = SOLV->xx[0]+integ;
+		prec_t integ = (delta_n/2)*(last_x+inpt);
+		new_x = SOLV->xx[0]+integ;
 	} else {
 		new_x = inpt;
 	}
 
 	//first iteration, since new values have not been saved to SOLV
-	prec_c_t temp = 0;
+	prec_c_t y_i = 0;
 	prec_c_t final=SOLV->eqs->offset*new_x;
 
 	prec_c_t outputs[4]={0,0,0,0};
@@ -158,22 +165,22 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	for (int i=0; i < SOLV->head.order; ++i) {
 		prec_c_t sigma_i=SOLV->eqs->denom->terms[i];
 		prec_c_t Ki=SOLV->eqs->num->terms[i];
-		temp=SOLV->yy[i]*Phi(sigma_i,delta_n);
-		prec_c_t q=SOLV->qq(sigma_i,delta_n,0);
-		temp+=Ki*q*new_x;
-		outputs[i]=temp;
+		y_i=SOLV->yy[i]*Phi(sigma_i,delta_n);
+		prec_c_t q=q2(sigma_i,delta_n,0);
+		y_i+=Ki*q*new_x;
+		outputs[i]=y_i;
 	}
 	// loop for j=1..n
 	for (int i=0; i < SOLV->head.order; ++i) {
 		prec_c_t sigma_i=SOLV->eqs->denom->terms[i];
 		prec_c_t Ki=SOLV->eqs->num->terms[i];
-		temp=0;
+		y_i=0;
 		for (int j=1; j <SOLV->head.order; ++j) {
 			prec_t delta_n=SOLV->tt[i];
 			prec_c_t q=SOLV->qq(sigma_i,delta_n,j);
-			temp+=Ki*q*SOLV->xx[j-1];
+			y_i+=Ki*q*SOLV->xx[j-1];
 		}
-		outputs[i]+=temp;
+		outputs[i]+=y_i;
 		final += outputs[i];
 	}
 	/* int n=SOLV->eqs->num->num_terms; */
@@ -193,7 +200,7 @@ prec_t accept(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	prec_t new_x;
 	if (SOLV->head.mode==INDUCTANCE) {
 		prec_t last_x=SOLV->curr_x;
-		prec_t integ = SOLV->tt[0]*((last_x+inpt)/2);
+		prec_t integ = (SOLV->tt[0]/2)*(last_x+inpt);
 		prec_t new_x = SOLV->xx[0]+integ;
 	} else {
 		new_x = inpt;
@@ -202,24 +209,23 @@ prec_t accept(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	SOLV->xx[0]=new_x;
 	SOLV->curr_x=inpt;
 
-	prec_c_t temp;
+	prec_c_t y_i;
 	prec_c_t final=SOLV->eqs->offset*new_x;
 	for (int i=0; i < SOLV->head.order; ++i) {
 		prec_t delta_n=SOLV->tt[i];
-		temp=0;
+		y_i=0;
 		prec_c_t sigma_i=SOLV->eqs->denom->terms[i];
 		prec_c_t Ki=SOLV->eqs->num->terms[i];
-		temp=SOLV->yy[i]*Phi(sigma_i,delta_n);
+		y_i=SOLV->yy[i]*Phi(sigma_i,delta_n);
 		for (int j=0; j <SOLV->head.order; ++j) {
 			// calculate the q terms
-			prec_c_t q=SOLV->qq(sigma_i,delta_n,j);
-			temp+=Ki*q*SOLV->xx[j];
+			delta_n=SOLV->tt[j];
+			prec_c_t q=q2(sigma_i,delta_n,j);
+			y_i+=Ki*q*SOLV->xx[j];
 		}
-		SOLV->yy[i]=temp;
-		final += temp;
+		SOLV->yy[i]=y_i;
+		final += y_i;
 	}
-	/* int n=SOLV->eqs->num->num_terms; */
-	/* SOLV->yy[n] = final; */
 	if (SOLV->cb != NULL) {
 		(*SOLV->cb)(SOLV, creal(final));
 	}
@@ -249,26 +255,6 @@ void step_resistance(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 										  interp_t);
 	prec_t out2 = d*SOLV->xx[0];
 	SOLV->yy[0] = out1+out2;
-}
-prec_t do_step(prec_t inpt, prec_t curr_t) {
-	//load and simulate
-	/* struct Solver_t * SOLV = read_solver("solv_obj_save.bin"); */
-	prec_t res=step(SOLV,inpt,curr_t);
-	write_solver(SOLV,"solv_obj_bak.bin");
-	//reset the solver so that we can update _just_ the step counter, and write
-	SOLV = read_solver("solv_obj_save.bin");
-	SOLV->num_steps++;
-	write_solver(SOLV,"solv_obj_save.bin");
-	solver_free(SOLV);
-	return res;
-}
-prec_t do_accept(prec_t inpt, prec_t curr_t) {
-	struct Solver_t * solv = read_solver("solv_obj_save.bin");
-	solv->num_calls++;
-	prec_t res=step(solv,inpt,curr_t);
-	write_solver(solv,"solv_obj_save.bin");
-	solver_free(solv);
-	return res;
 }
 
 /*

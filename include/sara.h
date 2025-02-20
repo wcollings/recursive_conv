@@ -5,8 +5,8 @@
 #include "central.h"
 #include <stdint.h>
 
-#define INDUCTANCE 1
-#define IMPEDANCE 0
+#define INDUCTANCE 0
+#define IMPEDANCE 1
 /*
  * Holds all the information needed to compute the next value.
  * This includes history, solver order, current and past time steps, etc.
@@ -15,14 +15,14 @@
  * we can compute that once and save it, then save the last actual time so that we can compute
  * the next time delta as well going forward.
  * `order`: int
- * `eqs`: Pade_t*
+ * `eqs`: Pade_t * 
  * `curr_t`: prec_t
  * `curr_x`: prec_t
- * `tt`: prec_t[order]
- * `xx`: prec_t[order]
- *	`yy`: prec_c_t[order]
- *	`qq`: prec_c_t(*)(prec_c_t,prec_c_t,int)
- *	`cb`: void(*)(struct Solver_t*)
+ * `tt`: prec_t [[order]]
+ * `xx`: prec_t [[order]]
+ *	`yy`: prec_c_t [[order]]
+ *	`qq`: prec_c_t( * )(prec_c_t,prec_c_t,int)
+ *	`cb`: void( * )(struct Solver_t * )
 */
 struct Solver_t {
 	struct {
