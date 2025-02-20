@@ -5,6 +5,7 @@
 #include "../include/poly.h"
 #include "../include/saber.h"
 #include "../include/log.h"
+#include "../include/ll.h"
 
 #define JOB inp[0]
 #define SETUP 1
@@ -17,12 +18,10 @@
 #define MODE inp[2]
 #define L 1
 #define X 0
-#define Kstart 3
-#define sstart 11
+#define Kstart 4
+#define sstart 12
 
-struct Solver_t * SOLV;
-void do_setup(double * in) {
-/* struct Solver_t * do_setup(double * in) { */
+struct Solver_t * do_setup(double * in) {
 	int order=4;
 	SOLV=malloc(sizeof(struct Solver_t));
 	prec_t * k_terms;
@@ -48,7 +47,8 @@ void do_setup(double * in) {
 	}
 	struct Pade_t * pade=pade_init_poly(num,denom);
 	pade->offset=in[1]+in[2]*I;
-	pade->offset=in[1]+in[2]*I;
+	return solver_init(2,pade,(int)in[0]);
+	
 	SOLV->head.order=order;
 	SOLV->head.mode=(uint32_t)in[0];
 	SOLV->eqs=pade;
