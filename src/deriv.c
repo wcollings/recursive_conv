@@ -3,7 +3,7 @@
 #define SUM(h) (*fn)(x+h) + (*fn)(x-h)
 
 
-prec_c_t sten_1(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
+prec_c_t sten_1(prec_c_t (*fn)(prec_t),prec_t x,prec_t h) {
 	int terms[] = {45,-9,1};
 	prec_t tot = 0;
 	for (int i=0; i < 3; ++i) {
@@ -13,7 +13,7 @@ prec_c_t sten_1(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
 	return tot/(60*h);
 }
 
-prec_c_t sten_2(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
+prec_c_t sten_2(prec_c_t (*fn)(prec_t),prec_t x,prec_t h) {
 	int terms[] = {25,44,-9};
 	prec_t tot = -120*creal((*fn)(x));
 	for (int i=0; i < 3; ++i) {
@@ -23,7 +23,7 @@ prec_c_t sten_2(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
 	return tot/(120*pow(h,2));
 }
 
-prec_c_t sten_3(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
+prec_c_t sten_3(prec_c_t (*fn)(prec_t),prec_t x,prec_t h) {
 	int terms[] = {-13,8,-1};
 	prec_t tot = 0;
 	for (int i=0; i < 3; ++i) {
@@ -32,7 +32,7 @@ prec_c_t sten_3(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
 	}
 	return tot/(8*pow(h,3));
 }
-prec_c_t sten_4(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
+prec_c_t sten_4(prec_c_t (*fn)(prec_t),prec_t x,prec_t h) {
 	int terms[] = {899,-1612,837,-124};
 	prec_t tot = 0;
 	for (int i=0; i < 4; ++i) {
@@ -41,7 +41,7 @@ prec_c_t sten_4(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
 	}
 	return tot/(930*pow(h,4));
 }
-prec_c_t sten_5(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
+prec_c_t sten_5(prec_c_t (*fn)(prec_t),prec_t x,prec_t h) {
 	int terms[] = {5,4,1};
 	prec_t tot = 0;
 	for (int i=0; i < 3; ++i) {
@@ -50,7 +50,7 @@ prec_c_t sten_5(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
 	}
 	return tot/(2*pow(h,5));
 }
-prec_c_t sten_6(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
+prec_c_t sten_6(prec_c_t (*fn)(prec_t),prec_t x,prec_t h) {
 	int terms[] = {-217,434,-279,62};
 	prec_t tot = 0;
 	for (int i=0; i < 4; ++i) {
@@ -58,7 +58,7 @@ prec_c_t sten_6(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
 	}
 	return tot/(217*pow(h,6));
 }
-prec_c_t sten_7(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
+prec_c_t sten_7(prec_c_t (*fn)(prec_t),prec_t x,prec_t h) {
 	int terms[] = {-14,14,-6,1};
 	prec_c_t tot = 0;
 	for (int i=0; i < 4; ++i) {
@@ -66,7 +66,7 @@ prec_c_t sten_7(prec_c_t (*fn)(prec_c_t),prec_c_t x,prec_c_t h) {
 	}
 	return tot/(2*pow(h,7));
 }
-prec_c_t * take_derivatives(prec_c_t (*fn)(prec_c_t), prec_c_t x, prec_c_t h) {
+prec_c_t * take_derivatives(prec_c_t (*fn)(prec_t), prec_t x, prec_t h) {
 	prec_c_t * res = (prec_c_t*)malloc(sizeof(prec_c_t)*4);
 	res[0] = (*fn)(x);
 	res[1] = sten_1(fn,x,h);

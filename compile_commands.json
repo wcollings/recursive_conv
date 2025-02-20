@@ -1,0 +1,42 @@
+[
+  {
+    "directory": "/home/wmc/Documents/fdep/loose_scripts/sara",
+    "file": "src/pade.c",
+    "command": "gcc -c -o obj/pade.o src/pade.c -Iinclude -fPIC -g"
+  },
+  {
+    "directory": "/home/wmc/Documents/fdep/loose_scripts/sara",
+    "file": "src/sara.c",
+    "command": "gcc -c -o obj/sara.o src/sara.c -Iinclude -fPIC -g"
+  },
+  {
+    "directory": "/home/wmc/Documents/fdep/loose_scripts/sara",
+    "file": "src/poly.c",
+    "command": "gcc -c -o obj/poly.o src/poly.c -Iinclude -fPIC -g"
+  },
+  {
+    "directory": "/home/wmc/Documents/fdep/loose_scripts/sara",
+    "file": "src/linear.c",
+    "command": "gcc -c -o obj/linear.o src/linear.c -Iinclude -fPIC -g"
+  },
+  {
+    "directory": "/home/wmc/Documents/fdep/loose_scripts/sara",
+    "file": "src/deriv.c",
+    "command": "gcc -c -o obj/deriv.o src/deriv.c -Iinclude -fPIC -g"
+  },
+  {
+    "directory": "/home/wmc/Documents/fdep/loose_scripts/sara",
+    "file": "src/interpolate.c",
+    "command": "gcc -c -o obj/interpolate.o src/interpolate.c -Iinclude -fPIC -g"
+  },
+  {
+    "directory": "/home/wmc/Documents/fdep/loose_scripts/sara",
+    "file": "main.c",
+    "command": "gcc -o sara_test main.c obj/pade.o obj/sara.o obj/poly.o obj/linear.o obj/deriv.o obj/interpolate.o -Iinclude -fPIC -g -lm"
+  },
+  {
+    "directory": "/home/wmc/Documents/fdep/loose_scripts/sara",
+    "file": "saber.c",
+    "command": "gcc -m32 -fPIC -Wall -c saber.c -o saber.dll -I/usr/include/saber/ -Iinclude/"
+  }
+]

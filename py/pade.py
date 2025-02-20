@@ -325,24 +325,27 @@ def get_err(rep,plot=False):
 	sig=array(sig)
 	approx=[]
 	err=[]
-	saber_overlay=pd.read_csv("lf_matching.csv")
+	# saber_overlay=pd.read_csv("lf_matching.csv")
 	for r in rep:
 		# res = vectorize(r)(xs)
 		# approx.append(res)
 		# err.append(np.sum(np.divide(np.abs(res-sig),sig)))
-		r.num.over_coeff=1/r.num.over_coeff
-		r.denom.over_coeff=1/r.denom.over_coeff
 		res = vectorize(r)(xs)
 		approx.append(res)
 		err.append(np.sum(np.divide(np.abs(res-sig),sig)))
 	if plot:
-		with figure_wrapper(outf="L_compare.png",show=True) as fw:
-			fw.plot2(xs,1/sig,sig,xlab="Frequency (Hz)",ylab1="L(f)",ylab2="1/L(f)",name="Original function")
-			for i,a in enumerate(approx):
-				fw.plot2(xs,1/a,a,xlab="Frequency (Hz)",ylab1="L(f)",ylab2="$L^{-1}(f)$",name=f"Approximation {i}")
-			linv = [1/l for l in saber_overlay.l]
-			fw.plot2(saber_overlay.f,saber_overlay.l,linv, name="From Saber")
-			fw.fig.axis.set_xscale('log')
+		with figure_wrapper(outf="L_compare_2pt.png",show=True) as fw:
+			fw.slogx(xs,1/sig,name="Given function")
+			# fw.plot2(xs,1/sig,sig,xlab="Frequency (Hz)",ylab1="L(f)",ylab2="1/L(f)",name="Original function")
+			# for i,a in enumerate(approx):
+			fw.slogx(xs,1/approx[0],name="Taylor series approximation")
+			fw.slogx(xs,1/approx[1],name="Two-Point Pade approximation")
+				# fw.plot2(xs,1/a,a,xlab="Frequency (Hz)",ylab1="L(f)",ylab2="$L^{-1}(f)$",name=f"Approximation {i}")
+			# linv = [1/l for l in saber_overlay.l]
+			# fw.plot2(saber_overlay.f,saber_overlay.l,linv, name="From Saber")
+			fw.ylim=(1e-9,3e-8)
+			fw.xlim=(10,1e9)
+			# fw.fig.axis.set_xscale('log')
 			fw.set_fontsize(15)
 	return err
 
@@ -364,19 +367,22 @@ def twopt(rep,start):
 	inner.disc = f"{start} + ({str(rep)})"
 	return inner
 def create_approx(x):
-		x0=x*1e6
+		x0=x
 		x1=1e9
-		l=lambda s:L(s)-L(x1)
+		l=lambda s:L(s)#-L(x1)
 		derivs=take_derivs(l,x0,3,40)
-		p1=Poly(derivs[::-1]).recenter(x0)
-		p=solve_system(p1,1,2)
+		taylor=Poly(derivs[::-1]).recenter(x0)
+		l1=lambda s:L(s)-L(x1)
+		derivs=take_derivs(l1,x0,3,40)
+		taylor2=Poly(derivs[::-1]).recenter(x0)
+		p=solve_system(taylor2,1,2)
 		# print(p)
 		s=separate(p)
 		# print(s)
 		s.k0=L(x1)
-		p.k0=L(x1)
+		# p.k0=L(x1)
 		s.sep=True
-		return s,p
+		return s,taylor
 
 def time_domain(rep:Pade):
 	rep.freq_domain=False
@@ -408,7 +414,7 @@ if __name__=="__main__":
 	# best_approx=Pade(Poly([]),Poly([]))
 	# xs = np.linspace(1,12,12)
 	# df=pd.DataFrame(0,index=xs,columns=['err','pow'])
-	s,p=create_approx(1)
+	s,p=create_approx(1e6)
 	# best_approx=s
 	# print(best_approx.to_latex())
 	s_shifted = deepcopy(s)
@@ -416,13 +422,14 @@ if __name__=="__main__":
 	s_shifted.denom.coeff = [k*100 for k in s.denom.coeff]
 	test_f = [1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10]
 	fbase=np.linspace(1,10,10)
-	f1=fbase*1e5
-	f2=fbase*1e6
-	fs=np.append(f1,f2)
+	f4=fbase*1e4
+	f5=fbase*1e5
+	f6=fbase*1e6
+	fs=np.append(f4,np.append(f5,f6))
 	# ls=tuple(map(lambda s:1/best_approx(s),fs))
 	# ls = [1e9/best_approx(f).real for f in fs]
 	# pd.DataFrame(data={'f':fs,'l':ls}).to_csv("real_lf.csv")
-	df=pd.DataFrame(0,index=test_f,columns=['L','H','delta'])
+	df=pd.DataFrame(0,index=fs,columns=['L','H','delta'])
 	df.index.name="f"
 	for freq in fs:
 		a=1/L(freq)
@@ -435,4 +442,4 @@ if __name__=="__main__":
 	# time_domain(best_approx)
 	# print(s.num.over_coeff)
 	# print(s.denom.over_coeff)
-	# get_err([s,s_shifted],True)
+	get_err([p,s],True)
