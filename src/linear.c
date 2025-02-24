@@ -12,6 +12,12 @@ void vec_iter(prec_c_t * vec, int m) {
 		temp=vec[j];
 }
 
+void vec_print(prec_c_t * vec, int m) {
+	for (int j=0; j < m; ++j) {
+		printf("v[%d] = %e\n",j,creal(vec[j]));
+	}
+}
+
 void mat_free(prec_c_t ** A, int m) {
 	if(A == NULL) {
 			printf("Error: matrix already freed\n");
