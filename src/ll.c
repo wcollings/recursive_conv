@@ -7,10 +7,10 @@ struct node * make(char * name, void * ptr) {
 	new_elem->name=malloc(sizeof(char)*len);
 	strncpy(name,new_elem->name,len);
 	new_elem->contents=ptr;
+	new_elem->next=NULL;
 	return new_elem;
 }
 int add(char * name, void * ptr) {
-	int found=0;
 	struct node * curr=root;
 	if (root==NULL) {
 		root=make(name,ptr);
@@ -29,6 +29,7 @@ void * find_obj(char * name) {
 	while (curr->next ==NULL) {
 		if (!strcmp(name,curr->name))
 			return curr->contents;
+		curr=curr->next;
 	}
 	return NULL;
 }

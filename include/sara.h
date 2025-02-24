@@ -76,8 +76,6 @@ prec_t accept(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t);
  *  - current time
  *  - voltage across part
 */
-prec_t do_step(prec_t inpt, prec_t curr_t);
-prec_t do_accept(prec_t inpt, prec_t curr_t);
 void write_solver(struct Solver_t * s,char* fname);
 struct Solver_t * read_solver(char * fname);
 
