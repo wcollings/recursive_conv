@@ -8,17 +8,20 @@
 #include "../include/ll.h"
 
 #define JOB inp[0]
-#define SETUP 1
-#define STEP 2
-#define ACCEPT 3
-#define CLOSE_LOG 4
-#define iL out[0]
-#define t inp[3]
+#define NAME_IDX inp[1]
 #define vl inp[2]
+#define t inp[3]
 
-#define MODE inp[2]
-#define L 1
-#define X 0
+#define iL out[0]
+
+#define SOLVER_NAME cgetstr(NAME_IDX)
+#define SOLVER find_obj(SOLVER_NAME)
+
+
+// Within the do_setup, the array is re-indexed to (x-2). This is because the first two elements don't need to 
+// be considered within that function, so they're just stripped off.
+// The following are array indices consistant with the setup portion
+#define MODE (int)in[0]
 #define Kstart 3
 #define sstart 11
 
@@ -27,8 +30,7 @@ struct Solver_t * do_setup(double * in) {
 	prec_t * k_terms;
 	k_terms=&in[Kstart];
 	prec_t * s_terms=&in[sstart];
-	for (int i=0; i < 4; ++i)
-	{
+	for (int i=0; i < 4; ++i) {
 		int idx=2*i;
 		if (k_terms[idx]==0 && k_terms[idx+1]==0) {
 			order=i;
@@ -47,7 +49,7 @@ struct Solver_t * do_setup(double * in) {
 	}
 	struct Pade_t * pade=pade_init_poly(num,denom);
 	pade->offset=in[1]+in[2]*I;
-	return solver_init(2,pade,(int)in[0]);
+	return solver_init(2,pade,MODE);
 };
 
 //SABER_FOREIGN_ROUTINE(IND) {
@@ -68,19 +70,24 @@ void IND(
 	if (nout[1] < nout[0]) {
 		return;
 	}
-	switch ((int)JOB) {
-		case SETUP: 
-						add(cgetstr(inp[1]),do_setup(&inp[2]));
+	enum call_tp input=(int)JOB;
+	switch (input) {
+		case INIT: 
+						add(SOLVER_NAME,do_setup(&inp[2]));
+						solver_reset_time(SOLVER);
 						nout[0]=1;
 						iL = 1;
 						break;
 		default:
-		case STEP: iL=step(find_obj(cgetstr(inp[1])),vl,t);
-					  break;
-		case ACCEPT: iL=accept(find_obj(cgetstr(inp[1])),vl,t);
-					  break;
-		case CLOSE_LOG:
-					break;
+		case STEP:
+						iL=step(SOLVER,vl,t);
+						break;
+		case ACCEPT: 
+						iL=accept(SOLVER,vl,t);
+						break;
+		case END:
+						solver_reset_time(SOLVER);
+						break;
 	}
 	return;
 }

@@ -12,14 +12,13 @@
 #define MIN(a,b) (a<b?a:b)
 struct Solver_t solvers[10];
 
-struct Solver_t * solver_init(int order,struct Pade_t * eq,int mode) {
+struct Solver_t * solver_init(unsigned int order,struct Pade_t * eq,unsigned int mode) {
 	struct Solver_t * self = malloc(sizeof(struct Solver_t));
 	self->num_calls=0;
 	/* printf("Creating solver obj!\n"); */
-	self->cb=NULL;
 	self->eqs=eq;
-	self->head.order=order;
-	self->head.mode=mode;
+	self->order=order;
+	self->mode=mode;
 	self->curr_t=0;
 	self->curr_x=0;
 	self->xx = calloc(sizeof(prec_t),order);
@@ -48,7 +47,7 @@ void solver_free(struct Solver_t * self) {
 }
 
 void solver_reset_time(struct Solver_t * self) {
-	for (int i=0; i < self->head.order; ++i) {
+	for (int i=0; i < self->order; ++i) {
 		self->curr_t=0;
 		self->curr_x=0;
 		self->tt[i]=0;
@@ -148,7 +147,7 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	}
 	prec_t delta_n=curr_t-SOLV->curr_t;
 	prec_t new_x;
-	if (SOLV->head.mode==INDUCTANCE) {
+	if (SOLV->mode==INDUCTANCE) {
 		prec_t last_x=SOLV->curr_x;
 		prec_t integ = (delta_n/2)*(last_x+inpt);
 		new_x = SOLV->xx[0]+integ;
@@ -162,7 +161,7 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 
 	prec_c_t outputs[4]={0,0,0,0};
 	// loop for j=0
-	for (int i=0; i < SOLV->head.order; ++i) {
+	for (int i=0; i < SOLV->order; ++i) {
 		prec_c_t sigma_i=SOLV->eqs->denom->terms[i];
 		prec_c_t Ki=SOLV->eqs->num->terms[i];
 		y_i=SOLV->yy[i]*Phi(sigma_i,delta_n);
@@ -171,11 +170,11 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 		outputs[i]=y_i;
 	}
 	// loop for j=1..n
-	for (int i=0; i < SOLV->head.order; ++i) {
+	for (int i=0; i < SOLV->order; ++i) {
 		prec_c_t sigma_i=SOLV->eqs->denom->terms[i];
 		prec_c_t Ki=SOLV->eqs->num->terms[i];
 		y_i=0;
-		for (int j=1; j <SOLV->head.order; ++j) {
+		for (int j=1; j <SOLV->order; ++j) {
 			prec_t delta_n=SOLV->tt[i];
 			prec_c_t q=SOLV->qq(sigma_i,delta_n,j);
 			y_i+=Ki*q*SOLV->xx[j-1];
@@ -185,39 +184,36 @@ prec_t step(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	}
 	/* int n=SOLV->eqs->num->num_terms; */
 	/* SOLV->yy[n] = final; */
-	if (SOLV->cb != NULL) {
-		(*SOLV->cb)(SOLV, creal(final));
-	}
 	return creal(final);
 }
 
 
 prec_t accept(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 	SOLV->num_calls++;
-	shift(SOLV->tt,SOLV->head.order);
+	shift(SOLV->tt,SOLV->order);
 	SOLV->tt[0]=curr_t-SOLV->curr_t;
 	SOLV->curr_t=curr_t;
 	prec_t new_x;
-	if (SOLV->head.mode==INDUCTANCE) {
+	if (SOLV->mode==INDUCTANCE) {
 		prec_t last_x=SOLV->curr_x;
 		prec_t integ = (SOLV->tt[0]/2)*(last_x+inpt);
 		prec_t new_x = SOLV->xx[0]+integ;
 	} else {
 		new_x = inpt;
 	}
-	shift(SOLV->xx,SOLV->head.order);
+	shift(SOLV->xx,SOLV->order);
 	SOLV->xx[0]=new_x;
 	SOLV->curr_x=inpt;
 
 	prec_c_t y_i;
 	prec_c_t final=SOLV->eqs->offset*new_x;
-	for (int i=0; i < SOLV->head.order; ++i) {
+	for (int i=0; i < SOLV->order; ++i) {
 		prec_t delta_n=SOLV->tt[i];
 		y_i=0;
 		prec_c_t sigma_i=SOLV->eqs->denom->terms[i];
 		prec_c_t Ki=SOLV->eqs->num->terms[i];
 		y_i=SOLV->yy[i]*Phi(sigma_i,delta_n);
-		for (int j=0; j <SOLV->head.order; ++j) {
+		for (int j=0; j <SOLV->order; ++j) {
 			// calculate the q terms
 			delta_n=SOLV->tt[j];
 			prec_c_t q=q2(sigma_i,delta_n,j);
@@ -226,10 +222,6 @@ prec_t accept(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
 		SOLV->yy[i]=y_i;
 		final += y_i;
 	}
-	if (SOLV->cb != NULL) {
-		(*SOLV->cb)(SOLV, creal(final));
-	}
-	write_solver(SOLV,"solv_obj_save.bin");
 	return creal(final);
 }
 
@@ -239,9 +231,9 @@ prec_t accept(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
  * anyway.
 */
 void step_resistance(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
-	shift(SOLV->xx,SOLV->head.order);
+	shift(SOLV->xx,SOLV->order);
 	SOLV->xx[0]=inpt;
-	shift(SOLV->tt,SOLV->head.order);
+	shift(SOLV->tt,SOLV->order);
 	SOLV->tt[0]=curr_t-SOLV->curr_t;
 	prec_t b = 2.04e-9;
 	prec_t c = -0.2739;
@@ -276,19 +268,8 @@ void step_resistance(struct Solver_t * SOLV, prec_t inpt, prec_t curr_t) {
  */
 void write_solver(struct Solver_t * s,char* fname) {
 	FILE * fp = fopen(fname,"wb");
-	//printf("Mode is %d\n",s->head.mode);
-	//printf("Order is %d\n",s->head.order);
-	union{
-	struct {
-	unsigned int order: 31;
-	unsigned int mode: 1;
-	} head;
-	uint32_t field;
-	} field;
-	field.head.order=s->head.order;
-	field.head.mode=s->head.mode;
-	//printf("Field is 0x%.8X\n",field.field);
-	fwrite(&s->head,sizeof(int32_t),1,fp); 
+	fwrite(&s->order,sizeof(int32_t),1,fp); 
+	fwrite(&s->mode,sizeof(int32_t),1,fp); 
 	int num_terms=s->eqs->num->num_terms;
 	/* fwrite(&num_terms,sizeof(int),1,fp);  */
 	fwrite(&s->num_calls,sizeof(int16_t),1,fp);
@@ -309,27 +290,21 @@ struct Solver_t * read_solver(char * fname) {
 	int tot_objs=0;
 	int num_objs=0;
 	struct Solver_t * self=malloc(sizeof(struct Solver_t));
-	fread(&self->head,sizeof(int32_t),1,fp);
+	fread(&self->order,sizeof(int32_t),1,fp);
+	fread(&self->mode,sizeof(int32_t),1,fp);
 	fread(&self->num_calls,sizeof(int16_t),1,fp);
 	fread(&self->num_steps,sizeof(int16_t),1,fp);
 	prec_c_t K0;
 	num_objs=fread(&K0,sizeof(prec_c_t),1,fp);
 	tot_objs+=num_objs;
-	/* printf("(K0) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
-	// Read in the equation:
-	// Ki terms
-	struct Polynomial_t * num = poly_init_bare(self->head.order);
-	num->terms = malloc(sizeof(prec_c_t)*self->head.order);
-	num_objs=fread(num->terms,sizeof(prec_c_t),self->head.order,fp);
+	struct Polynomial_t * num = poly_init_bare(self->order);
+	num->terms = malloc(sizeof(prec_c_t)*self->order);
+	num_objs=fread(num->terms,sizeof(prec_c_t),self->order,fp);
 	tot_objs+=num_objs;
-	/* printf("(Ki) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
-	//sigma_i terms
-	struct Polynomial_t * denom = poly_init_bare(self->head.order);
-	denom->terms = malloc(sizeof(prec_c_t)*self->head.order);
-	num_objs=fread(denom->terms,sizeof(prec_c_t),self->head.order,fp);
+	struct Polynomial_t * denom = poly_init_bare(self->order);
+	denom->terms = malloc(sizeof(prec_c_t)*self->order);
+	num_objs=fread(denom->terms,sizeof(prec_c_t),self->order,fp);
 	tot_objs+=num_objs;
-	/* printf("(si) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
-	// Form the object
 	struct Pade_t * eq = pade_init_poly(num,denom);
 	eq->offset = K0;
 	eq->vals=Roots;
@@ -337,23 +312,18 @@ struct Solver_t * read_solver(char * fname) {
 	
 	num_objs=fread(&self->curr_t,sizeof(prec_t),1,fp);
 	tot_objs+=num_objs;
-	/* printf("(curr_t) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
 	num_objs=fread(&self->curr_x,sizeof(prec_t),1,fp);
 	tot_objs+=num_objs;
-	/* printf("(curr_x) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
-	self->tt = (prec_t*)malloc(sizeof(prec_t)*self->head.order);
-	num_objs=fread(self->tt,sizeof(prec_t),self->head.order,fp);
+	self->tt = (prec_t*)malloc(sizeof(prec_t)*self->order);
+	num_objs=fread(self->tt,sizeof(prec_t),self->order,fp);
 	tot_objs+=num_objs;
-	/* printf("(tt) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
-	self->xx = (prec_t*)malloc(sizeof(prec_t)*self->head.order);
-	num_objs=fread(self->xx,sizeof(prec_t),self->head.order,fp);
+	self->xx = (prec_t*)malloc(sizeof(prec_t)*self->order);
+	num_objs=fread(self->xx,sizeof(prec_t),self->order,fp);
 	tot_objs+=num_objs;
-	/* printf("(xx) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
-	self->yy = (prec_c_t*)malloc(sizeof(prec_t)*self->head.order);
-	num_objs=fread(self->yy,sizeof(prec_c_t),self->head.order,fp);
+	self->yy = (prec_c_t*)malloc(sizeof(prec_t)*self->order);
+	num_objs=fread(self->yy,sizeof(prec_c_t),self->order,fp);
 	tot_objs+=num_objs;
-	/* printf("(yy) objects read: %d\n\ttotal:%d\n",num_objs,tot_objs); */
-	switch (self->head.order) {
+	switch (self->order) {
 		case 1: self->qq=q1;
 				  break;
 		case 2: self->qq=q2;
@@ -364,7 +334,6 @@ struct Solver_t * read_solver(char * fname) {
 				  break;
 		default: self->qq=q2;
 	}
-	self->cb=NULL;
 	fclose(fp);
 	return self;
 }

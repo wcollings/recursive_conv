@@ -5,8 +5,8 @@
 #include "central.h"
 #include <stdint.h>
 
-#define INDUCTANCE 0
-#define IMPEDANCE 1
+enum part_tp { INDUCTANCE, ADMITTANCE};
+
 /*
  * Holds all the information needed to compute the next value.
  * This includes history, solver order, current and past time steps, etc.
@@ -25,10 +25,8 @@
  *	`cb`: void( * )(struct Solver_t * )
 */
 struct Solver_t {
-	struct {
-	unsigned int order: 31;
-	unsigned int mode: 1;
-	} head;
+	unsigned int order;
+	enum part_tp mode;
 	unsigned int num_calls;
 	unsigned int num_steps;
 	struct Pade_t * eqs;
@@ -38,10 +36,8 @@ struct Solver_t {
 	prec_t * xx; /* previous input states */
 	prec_c_t * yy; /* previous output states */
 	prec_c_t (*qq)(prec_c_t,prec_c_t,int);
-	void (*cb)(struct Solver_t *, double res); /* A callback function (optional) for printing intermediate results etc.*/
 };
 
-/* extern struct Solver_t solvers[10]; */
 extern struct Solver_t * SOLV;
 prec_c_t q1(prec_c_t,prec_c_t,int);
 prec_c_t q2(prec_c_t,prec_c_t,int);
@@ -55,7 +51,7 @@ prec_c_t q4(prec_c_t,prec_c_t,int);
  * `mode` a flag for whether or not to integrate the input - to toggle between an inductor (iL=1/L*integ v_L dt) or an impedance (transfer function)
  * `returns` a fully initialized Solver object
 */
-struct Solver_t * solver_init(int order,struct Pade_t * eq, int mode);
+struct Solver_t * solver_init(unsigned int order,struct Pade_t * eq, unsigned int mode);
 
 /*
  * Shift an array over by one, essentially dequeueing the last element
@@ -63,6 +59,11 @@ struct Solver_t * solver_init(int order,struct Pade_t * eq, int mode);
  * `num_ele`: the size of the array
 */
 void shift(prec_t * arr,int num_ele);
+
+/*
+ * At the end of a simulation, reset the time to 0 and clear all the arrays just in case
+*/
+void solver_reset_time(struct Solver_t * self);
 
 /*
  * Take a step in the time domain, advancing the solver by one time step

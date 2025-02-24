@@ -16,6 +16,7 @@ extern "C"
 
 #include <saberApi.h>
 
+enum call_tp { INIT,STEP,ACCEPT,START,END };
 
 /* Declare our Add function using the above definitions. */
 void IND(double* inp,int* ninp,int* ifl,int* nifl,double* out,int* nout,int *ofl,int *nofl,double *aundef,int *ier);
