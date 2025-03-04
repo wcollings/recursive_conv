@@ -43,7 +43,6 @@ struct Solver_t * do_setup(double * in) {
 			break;
 		}
 	}
-	/* printf("Found %d terms\n",order); */
 	struct Polynomial_t * num=poly_init_bare(order);
 	struct Polynomial_t * denom=poly_init_bare(order);
 	num->terms=malloc(sizeof(prec_c_t)*order);
@@ -59,19 +58,36 @@ struct Solver_t * do_setup(double * in) {
 };
 
 /*
- * First argument in `inp` is always the control flag (see call_tp enum). past that, the arguments required are listed below
- * Argument lists:
- * `INIT`: gets called when the project is first opened
- *  [ mode, name, k0, k0i, k1, k1i, k2, k2i, k3, k3i, k4, k4i, sigma1, sigma1i, sigma2, sigma2i, sigma3, sigma3i, sigma4, sigma4i ]
- *  `STEP`: gets called during the time step decision iteration loop.
- *  [ name, v, t]
- *  `ACCEPT`: gets called once the time step decision iteration loop finishes, before the next time step iteration loop begins.
- *  [ name, v, t]
- *  `START`: called before the start of a transient simulation. Opens the log file.
- *  [ name]
- *  `END`: called before the start of a transient simulation. Closes the log file and resets the solver objects.
- *  [ name]
+ * The start point for the whole DLL, and thus the algorithm.
  *
+ * First argument in `inp` is always the control flag (see call_tp enum). past that, the arguments required are listed below
+ *
+ * `INIT`: gets called when the project is first opened
+ *
+ *  arguments: [ name, MODE, k0, k0i, k1, k1i, k2, k2i, k3, k3i, k4, k4i, sigma1, sigma1i, sigma2, sigma2i, sigma3, sigma3i, sigma4, sigma4i ]
+ *  `STEP`: gets called during the time step decision iteration loop.
+ *
+ *  arguments: [ name, v, t ]
+ *  `ACCEPT`: gets called once the time step decision iteration loop finishes, before the next time step iteration loop begins.
+ *
+ *  arguments: [ name, v, t ]
+ *  `START`: called before the start of a transient simulation. Opens the log file.
+ *  arguments: [ name ]
+ *  `END`: called before the start of a transient simulation. Closes the log file and resets the solver objects.
+ *  arguments: [ name ]
+ *
+ *  The full arguments are as follows:
+ *  `inp`: as described above
+ *  `ninp`: the size of the given `inp` array.
+ *  `ifl`: an array of flags given
+ *  `nifl`: the size of the `ifl` array
+ *  `out`: the array to hold any and all outputs
+ *  `nout`: the number of pre-allocated elements in the output array. If this is less than you need, set it to a larger number and return immediately. The func will be re-called with the right number and only then can you procede.
+ *
+ *  `olf`: an array of flags to be returned.
+ *  `nolf`: the pre-allocated size of the `ofl` array.
+ *  `aundef`: the used value that means "undefined" in the simulator. If you need to specify "undefined", just copy the value of this into wherever you need it.
+ *  `ier`: if an error has occured.
  */
 void IND(
         double* inp, 	//used
@@ -97,17 +113,17 @@ void IND(
 						nout[0]=1;
 						iL = 1;
 						break;
+		case START:
+						log_init("sara.log");
+						log_msg("Starting transient simulation");
+						solver_reset_time(SOLVER);
+						break;
 		default:
 		case STEP:
 						iL=step(SOLVER,vl,t);
 						break;
 		case ACCEPT: 
 						iL=accept(SOLVER,vl,t);
-						break;
-		case START:
-						log_init("sara.log");
-						log_msg("Starting transient simulation");
-						solver_reset_time(SOLVER);
 						break;
 		case END:
 						log_msg("Ending transient simulation");
