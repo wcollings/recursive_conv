@@ -7,14 +7,16 @@
 /* Define calling convention in one place, for convenience. */
 #define ADDCALL __cdecl
 
-/* Make sure functions are exported with C linkage under C++ compilers. */
+#ifdef DLL
+#include <saberApi.h>
+#endif
 
+/* Make sure functions are exported with C linkage under C++ compilers. */
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#include <saberApi.h>
 
 enum call_tp { INIT,STEP,ACCEPT,START,END };
 

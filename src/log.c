@@ -1,9 +1,11 @@
 #include "../include/log.h"
 
-FILE * lf;
+FILE * lf=NULL;
 void log_init(char * log_name){
-	lf=fopen(log_name,"a");
-	fprintf(lf,"Log opened\n");
+	if (lf==NULL) {
+		lf=fopen(log_name,"a");
+		fprintf(lf,"Log opened\n");
+	}
 }
 
 void log_warn(char * msg) {
@@ -16,7 +18,10 @@ void log_msg(char * msg) {
 	fprintf(lf,"MESSAGE: %s\n",msg);
 }
 void log_close() {
-	fclose(lf);
+	if (lf != NULL) {
+		fclose(lf);
+		lf=NULL;
+	}
 }
 
 

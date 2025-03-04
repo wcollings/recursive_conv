@@ -25,6 +25,12 @@
 #define Kstart 3
 #define sstart 11
 
+void log_params(double in[2]) {
+	char * str = malloc(80);
+	snprintf(str,80,"v=%e,t=%e\n",in[0],in[1]);
+	log_msg(str);
+}
+
 struct Solver_t * do_setup(double * in) {
 	int order=4;
 	prec_t * k_terms;
@@ -52,7 +58,21 @@ struct Solver_t * do_setup(double * in) {
 	return solver_init(2,pade,MODE);
 };
 
-//SABER_FOREIGN_ROUTINE(IND) {
+/*
+ * First argument in `inp` is always the control flag (see call_tp enum). past that, the arguments required are listed below
+ * Argument lists:
+ * `INIT`: gets called when the project is first opened
+ *  [ mode, name, k0, k0i, k1, k1i, k2, k2i, k3, k3i, k4, k4i, sigma1, sigma1i, sigma2, sigma2i, sigma3, sigma3i, sigma4, sigma4i ]
+ *  `STEP`: gets called during the time step decision iteration loop.
+ *  [ name, v, t]
+ *  `ACCEPT`: gets called once the time step decision iteration loop finishes, before the next time step iteration loop begins.
+ *  [ name, v, t]
+ *  `START`: called before the start of a transient simulation. Opens the log file.
+ *  [ name]
+ *  `END`: called before the start of a transient simulation. Closes the log file and resets the solver objects.
+ *  [ name]
+ *
+ */
 void IND(
         double* inp, 	//used
         int*   ninp,	//used
@@ -74,7 +94,6 @@ void IND(
 	switch (input) {
 		case INIT: 
 						add(SOLVER_NAME,do_setup(&inp[2]));
-						solver_reset_time(SOLVER);
 						nout[0]=1;
 						iL = 1;
 						break;
@@ -85,8 +104,14 @@ void IND(
 		case ACCEPT: 
 						iL=accept(SOLVER,vl,t);
 						break;
-		case END:
+		case START:
+						log_init("sara.log");
+						log_msg("Starting transient simulation");
 						solver_reset_time(SOLVER);
+						break;
+		case END:
+						log_msg("Ending transient simulation");
+						log_close();
 						break;
 	}
 	return;

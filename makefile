@@ -3,7 +3,7 @@ Saberdir=C:/Synopsys/SaberRD64/U-2023.06/64/include
 Saberinc=C:/Synopsys/SaberRD64/U-2023.06/64/bin
 cc=gcc
 CFLAGS=-I$(IDIR) -fno-stack-protector -g
-dll_cflags=-DADD_EXPORTS -DGW32 -D_MSC_VER
+dll_cflags=-DADD_EXPORTS -DGW32 -D_MSC_VER -DDLL
 dll_eflags=-s -shared -Wl,--subsystem,windows -static-libgcc -DGW32 -fPIC
 LIBS=-lm
 _DEPS=pade.h sara.h poly.h linear.h deriv.h interpolate.h central.h log.h ll.h
@@ -15,7 +15,7 @@ OBJ=$(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
 sara_test:main.c $(OBJ)
-	$(cc) -o $@ $^ $(CFLAGS) $(LIBS)
+	$(cc) -o $@ $^ $(CFLAGS) $(LIBS) -L$(Saberinc) -lai_saberhdl -I$(Saberdir) -g
 
 
 $(ODIR)/%.o: src/%.c $(DEPS)
@@ -27,6 +27,7 @@ sara_lib:$(OBJ)
 saber:$(OBJ) src/saber.c
 	$(cc) -Wall -c -o obj/saber.o src/saber.c $(LIBS) -I -Iinclude\ $(dll_cflags) -I$(Saberdir) -L$(Saberinc)
 	$(cc) -o ind.dll $(OBJ) $(dll_eflags) -L$(Saberinc) -lai_saberhdl
+	cp ind.dll ../saberrd/projects/dpt_with_sara
 
 print_obj: print_solver.c
 	$(cc) print_solver.c obj/sara.o obj/pade.o obj/poly.o obj/linear.o obj/interpolate.o -lm
