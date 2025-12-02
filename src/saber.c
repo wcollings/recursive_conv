@@ -20,6 +20,20 @@
 #define sstart 11
 
 struct Solver_t * SOLV;
+
+/*
+ * The input array has the following structure: (square brackets indicate array index)
+ * [0] -> Selector for "Pure Inductance" vs "Admittance" mode
+ * [1,2] -> real and imaginary components of K0
+ * [[3,4]],...[[9,10]] -> real and imaginary components of K1..K4. If there are less than 4 terms to the model, the rest are set to 0
+ * [[11,12]],...[17,18]] -> real and imaginary components of sigma1..sigma4. If there are less than 4 terms to the model, the rest are set to 0
+ *
+ * Setup detects the first (0+0i) element in the Ki sub-vector, and creates the objects it needs with that info.
+ * If there is no (0+0i) element, its assumed that all 4 terms are needed.
+ * 
+ * `num` refers to the Ki vector, and `denom` to the `sigma_i` vector,
+ * since they come from (K/(s-sigma))
+ */
 void do_setup(double * in) {
 	int order=4;
 	SOLV=malloc(sizeof(struct Solver_t));
@@ -51,7 +65,6 @@ void do_setup(double * in) {
 /* Need all these extra fields to interface correctly with their API
  * `inp` The array of inputs. Note that the length and contents of this will vary with the required action.
  *       The first element of this states what the required action is: 1 for init, 2 for step, 3 for accept.
- *       God knows exporting more than one function from a DLL is impossible (sarcasm)
  * `ninp` The number of inputs given, just in case you need that. Also used for passing strings somehow?
  * `ifl`: Unused
  * `nifl`: Unused, the number of elements in ifl
@@ -60,7 +73,7 @@ void do_setup(double * in) {
  *         number of inputs, you have to change this number, do nothing else, and return. Your function will then get
  *         re-called with the correct number of outputs correctly allocated.
  *`ofl`: unused
- *`nofl`: the number elements in ofl
+ *`nofl`: the number elements in ofl (therefore also unused)
  *`aundef`: the value used to indicate "undefined". You will be given this, so just copy it wherever you need it
  *`ier`: unused
 */
