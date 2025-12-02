@@ -2,6 +2,15 @@
  * SARA - Semi-Analytical Recursive Algorithm
  * Implements Recursive Convolution
  *
+ * After initialization, the two main functions are `step` and `accept`.
+ * `step` gets called while the solver is trying to find the next time step point. It is used to iterate the pseudo-jacobian matrix 
+ * until a solution is found that is acceptable. Once that is found, `accept` is called to lock in those values.
+ * 
+ * Therefore, `step` and `accept` are nearly identical, except that:
+ * - step doesn't save the newly calculated output value, only returning it to the simulation
+ * - accept saves the newly calculated output value
+ *
+ *
 */
 #include <stdlib.h>
 #include <math.h>
@@ -105,18 +114,35 @@ prec_c_t q3(prec_c_t sigma_i,prec_c_t delta_n,int n) {
 	}
 	return q;
 }
-
+/*
+* Removes the next element of a queue (FIFO) of real numbers
+*/
 void shift(prec_t * arr,int num_ele) {
 	for (int i=num_ele-1; i > 0; --i) {
 		arr[i]=arr[i-1];
 	}
 }
+
+/*
+ * Removes the next element of a queue (FIFO) of complex numbers 
+*/
 void shift_c(prec_c_t * arr,int num_ele) {
 	for (int i=num_ele-1; i > 0; --i) {
 		arr[i]=arr[i-1];
 	}
 }
 
+/*
+ * Take a step, as described in the header.
+ *
+ * The arguments are:
+ * - The solver object to reference
+ * - The voltage across the component, and 
+ * - the simulation time value
+ * 
+ * Doesn't save the results, only returns them
+ * The loop logic has to be a little bit more complex to account for that
+*/
 prec_t step(struct Solver_t * SOLV, const prec_t inpt, const prec_t curr_t) {
 	SOLV->num_steps++;
 	if (curr_t < SOLV->curr_t) {
@@ -136,7 +162,9 @@ prec_t step(struct Solver_t * SOLV, const prec_t inpt, const prec_t curr_t) {
 	prec_c_t final=SOLV->eqs->offset*new_x;
 
 	prec_c_t outputs[4]={0,0,0,0};
-	// can't save the values to SOLV yet, so have to do this jank instead
+	// We can't save the new voltage as x[0] yet, so instead we have to
+	// process it seperately and then adjust the indexing of the x vector
+	// to line up in the next step.
 	// loop for j=0
 	for (int i=0; i < SOLV->head.order; ++i) {
 		prec_c_t sigma_i=SOLV->eqs->denom->terms[i];
@@ -162,6 +190,16 @@ prec_t step(struct Solver_t * SOLV, const prec_t inpt, const prec_t curr_t) {
 	return creal(final);
 }
 
+/*
+ * Lock in the found time and voltage values, as described in the header.
+ *
+ * The arguments are:
+ * - The solver object to reference
+ * - The voltage across the component, and 
+ * - the simulation time value
+ * 
+ * Saves the inputs and outputs, and returns them as well
+*/
 prec_t accept(struct Solver_t * SOLV, const prec_t inpt, const prec_t curr_t) {
 	SOLV->num_calls++;
 	shift(SOLV->tt,SOLV->head.order);
