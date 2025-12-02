@@ -65,6 +65,8 @@ void shift(prec_t * arr,int num_ele);
 /*
  * When the solver is iterating, trying to find the next valid time step, this function is called.
  * Calculate, but DO NOT STORE, the result of this next datapoint.
+ *  (The loop logic has to be a little bit more complex to account for that)
+ * 
  * `SOLV`: an instance of the solver
  * `inpt`: The state variable (likey voltage or current) at the next time step
 */
